@@ -41,6 +41,15 @@ CREATE TABLE "subjects" (
 );
 
 -- CreateTable
+CREATE TABLE "staff_subjects" (
+    "id" SERIAL NOT NULL,
+    "staff_id" INTEGER NOT NULL,
+    "subject_id" INTEGER NOT NULL,
+
+    CONSTRAINT "staff_subjects_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "lessons" (
     "id" SERIAL NOT NULL,
     "group_id" INTEGER NOT NULL,
@@ -60,11 +69,36 @@ CREATE TABLE "payments" (
     CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "price_settings" (
+    "id" SERIAL NOT NULL,
+    "data" JSONB NOT NULL,
+
+    CONSTRAINT "price_settings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "price_history" (
+    "id" SERIAL NOT NULL,
+    "data" JSONB NOT NULL,
+
+    CONSTRAINT "price_history_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "staff_subjects_staff_id_subject_id_key" ON "staff_subjects"("staff_id", "subject_id");
+
 -- AddForeignKey
 ALTER TABLE "groups" ADD CONSTRAINT "groups_room_id_fkey" FOREIGN KEY ("room_id") REFERENCES "rooms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "children" ADD CONSTRAINT "children_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "groups"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "staff_subjects" ADD CONSTRAINT "staff_subjects_staff_id_fkey" FOREIGN KEY ("staff_id") REFERENCES "staff"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "staff_subjects" ADD CONSTRAINT "staff_subjects_subject_id_fkey" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "lessons" ADD CONSTRAINT "lessons_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

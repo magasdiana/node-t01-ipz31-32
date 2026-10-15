@@ -9,7 +9,7 @@ datasource db {
 
 model Room {
   id     Int     @id @default(autoincrement())
-  data   Json    // назва, вартість
+  data   Json    // назва, cost
   groups Group[]
 
   @@map("rooms")
@@ -21,6 +21,7 @@ model Group {
   data     Json     // вік, ліміт
   room     Room?    @relation(fields: [roomId], references: [id])
   children Child[]
+  staff    Staff[]
   lessons  Lesson[]
 
   @@map("groups")
@@ -37,19 +38,34 @@ model Child {
 }
 
 model Staff {
-  id      Int      @id @default(autoincrement())
-  data    Json     // ПІБ, посада, зарплата
-  lessons Lesson[]
+  id            Int            @id @default(autoincrement())
+  groupId       Int?           @map("group_id") // вихователь і помічник належать групі
+  data          Json           // ПІБ, посада, зарплата
+  group         Group?         @relation(fields: [groupId], references: [id])
+  staffSubjects StaffSubject[]
+  lessons       Lesson[]
 
   @@map("staff")
 }
 
 model Subject {
-  id      Int      @id @default(autoincrement())
-  data    Json     // назва гуртка
-  lessons Lesson[]
+  id            Int            @id @default(autoincrement())
+  data          Json           // назва гуртка
+  staffSubjects StaffSubject[]
+  lessons       Lesson[]
 
   @@map("subjects")
+}
+
+model StaffSubject {
+  id        Int     @id @default(autoincrement())
+  staffId   Int     @map("staff_id")
+  subjectId Int     @map("subject_id")
+  staff     Staff   @relation(fields: [staffId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([staffId, subjectId])
+  @@map("staff_subjects")
 }
 
 model Lesson {
@@ -72,4 +88,18 @@ model Payment {
   child   Child @relation(fields: [childId], references: [id])
 
   @@map("payments")
+}
+
+model PriceSettings {
+  id   Int  @id @default(autoincrement())
+  data Json // поточні ціни: навчання, харчування за віком, пільги, річна знижка
+
+  @@map("price_settings")
+}
+
+model PriceHistory {
+  id   Int  @id @default(autoincrement())
+  data Json // старі значення, дата, хто змінив. Без FK за рішенням
+
+  @@map("price_history")
 }
