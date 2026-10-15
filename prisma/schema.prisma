@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model Room {
+  id     Int     @id @default(autoincrement())
+  data   Json    // назва, вартість
+  groups Group[]
+
+  @@map("rooms")
+}
+
+model Group {
+  id       Int      @id @default(autoincrement())
+  roomId   Int?     @map("room_id")
+  data     Json     // вік, ліміт
+  room     Room?    @relation(fields: [roomId], references: [id])
+  children Child[]
+  lessons  Lesson[]
+
+  @@map("groups")
+}
+
+model Child {
+  id       Int       @id @default(autoincrement())
+  groupId  Int?      @map("group_id")
+  data     Json      // ім'я, дата народження, батьки (3), родич-депутат, вподобання, пільга
+  group    Group?    @relation(fields: [groupId], references: [id])
+  payments Payment[]
+
+  @@map("children")
+}
+
+model Staff {
+  id      Int      @id @default(autoincrement())
+  data    Json     // ПІБ, посада, зарплата
+  lessons Lesson[]
+
+  @@map("staff")
+}
+
+model Subject {
+  id      Int      @id @default(autoincrement())
+  data    Json     // назва гуртка
+  lessons Lesson[]
+
+  @@map("subjects")
+}
+
+model Lesson {
+  id        Int     @id @default(autoincrement())
+  groupId   Int     @map("group_id")
+  subjectId Int     @map("subject_id")
+  staffId   Int     @map("staff_id")
+  data      Json    // день, час початку, тривалість
+  group     Group   @relation(fields: [groupId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  staff     Staff   @relation(fields: [staffId], references: [id])
+
+  @@map("lessons")
+}
+
+model Payment {
+  id      Int   @id @default(autoincrement())
+  childId Int   @map("child_id")
+  data    Json  // сума, знижки, період, дата
+  child   Child @relation(fields: [childId], references: [id])
+
+  @@map("payments")
+}
