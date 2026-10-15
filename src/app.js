@@ -7,6 +7,7 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
 import childrenRoutes from "./modules/children/children.routes.js";
 import groupsRoutes from "./modules/groups/groups.routes.js";
+import roomsRoutes from "./modules/rooms/rooms.routes.js";
 import staffRoutes from "./modules/staff/staff.routes.js";
 import subjectsRoutes from "./modules/subjects/subjects.routes.js";
 import lessonsRoutes from "./modules/lessons/lessons.routes.js";
@@ -19,24 +20,33 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+// Перевірка стану сервера
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
-// Документація
-app.get("/openapi.json", (req, res) => res.json(openapiSpec));
+// OpenAPI та Swagger-документація
+app.get("/openapi.json", (req, res) => {
+  res.json(openapiSpec);
+});
+
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
-// Модулі. Жодного auth-middleware: авторизації поки немає.
+// Модулі API. Авторизації поки немає.
 app.use("/children", childrenRoutes);
 app.use("/groups", groupsRoutes);
+app.use("/rooms", roomsRoutes);
 app.use("/staff", staffRoutes);
 app.use("/subjects", subjectsRoutes);
 app.use("/schedules", schedulesRoutes);
 app.use("/payments", paymentsRoutes);
 app.use("/reports", reportsRoutes);
-// Lessons мають шляхи з різних ресурсів (/lessons/:id, /groups/:id/lessons),
-// тому їх монтуємо з кореня, а повні шляхи задаємо в lessons.routes.js
+
+// Lessons містять маршрути для різних ресурсів,
+// тому монтуємо їх із кореня.
 app.use("/", lessonsRoutes);
 
+// Обробка неіснуючих маршрутів та помилок
 app.use(notFound);
 app.use(errorHandler);
 
