@@ -1,2 +1,7 @@
-// Шар "schema" модуля subjects. Реалізація з'явиться далі.
-export {};
+import { z } from 'zod';
+
+export const createSubjectSchema = z.object({
+  name: z.string().min(1, 'Назва гуртка є обов’язковою'),
+});
+
+export const updateSubjectSchema = createSubjectSchema.partial();
