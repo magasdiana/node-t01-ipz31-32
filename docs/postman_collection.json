@@ -1,0 +1,63 @@
+{
+	"info": {
+		"name": "Kindergarten REST API (QA)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Healthcheck",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+			}
+		},
+		{
+			"name": "Get Children",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/children", "host": ["{{baseUrl}}"], "path": ["children"] }
+			}
+		},
+		{
+			"name": "Get Groups",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/groups", "host": ["{{baseUrl}}"], "path": ["groups"] }
+			}
+		},
+		{
+			"name": "Get Rooms",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/rooms", "host": ["{{baseUrl}}"], "path": ["rooms"] }
+			}
+		},
+		{
+			"name": "Get Invoice (Month)",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/children/1/invoice?period=month", "host": ["{{baseUrl}}"], "path": ["children", "1", "invoice"], "query": [{"key": "period", "value": "month"}] }
+			}
+		},
+		{
+			"name": "Get Prices",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/settings/prices", "host": ["{{baseUrl}}"], "path": ["settings", "prices"] }
+			}
+		},
+		{
+			"name": "Get Report Profit",
+			"request": {
+				"method": "GET",
+				"url": { "raw": "{{baseUrl}}/reports/profit", "host": ["{{baseUrl}}"], "path": ["reports", "profit"] }
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000"
+		}
+	]
+}
