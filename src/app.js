@@ -14,6 +14,7 @@ import lessonsRoutes from "./modules/lessons/lessons.routes.js";
 import schedulesRoutes from "./modules/schedules/schedules.routes.js";
 import paymentsRoutes from "./modules/payments/payments.routes.js";
 import reportsRoutes from "./modules/reports/reports.routes.js";
+import pricingRoutes from "./modules/pricing/pricing.routes.js";
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use("/reports", reportsRoutes);
 // Lessons містять маршрути для різних ресурсів,
 // тому монтуємо їх із кореня.
 app.use("/", lessonsRoutes);
+app.use("/", pricingRoutes); // Модуль pricing: /settings/prices та /children/:id/invoice
 
 // Обробка неіснуючих маршрутів та помилок
 app.use(notFound);
