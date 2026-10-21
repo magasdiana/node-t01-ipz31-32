@@ -7,6 +7,7 @@ import lessonsDocs from "../modules/lessons/lessons.docs.js";
 import schedulesDocs from "../modules/schedules/schedules.docs.js";
 import paymentsDocs from "../modules/payments/payments.docs.js";
 import reportsDocs from "../modules/reports/reports.docs.js";
+import pricingDocs from "../modules/pricing/pricing.docs.js";
 
 const modules = [
   childrenDocs,
@@ -18,6 +19,7 @@ const modules = [
   paymentsDocs,
   reportsDocs,
   roomsDocs,
+  pricingDocs,
 ];
 
 // Збираємо шляхи з усіх модулів в одну специфікацію OpenAPI 3
