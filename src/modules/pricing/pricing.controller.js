@@ -1,6 +1,18 @@
 import { pricingService } from './pricing.service.js';
 
 export const pricingController = {
+    // GET /children/:id/invoice
+    async getInvoice(req, res, next) {
+        try {
+            const childId = req.params.id;
+            const period = req.query.period || 'month';
+            const invoice = await pricingService.getChildInvoice(childId, period);
+            res.json(invoice);
+        } catch (err) {
+            next(err);
+        }
+    },
+
     async getPrices(req, res, next) {
         try {
             const prices = await pricingService.getCurrentPrices();
