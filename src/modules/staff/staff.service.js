@@ -1,8 +1,13 @@
 import { staffRepository } from './staff.repository.js';
 import { subjectsRepository } from '../subjects/subjects.repository.js';
+import {
+  BadRequestError,
+  NotFoundError,
+  ConflictError,
+} from '../../lib/errors.js';
 import * as constants from '../../config/constants.js';
 
-// Базова зарплата за замовчуванням (40000 за ТЗ)
+// Базова зарплата за замовчуванням
 const BASE_SALARY = constants.DEFAULT_SALARY || constants.SALARY || 40000;
 
 export const staffService = {
@@ -24,9 +29,7 @@ export const staffService = {
   async getById(id) {
     const item = await staffRepository.findById(id);
     if (!item) {
-      const error = new Error('Співробітника не знайдено');
-      error.status = 404;
-      throw error;
+      throw new NotFoundError('Співробітника не знайдено');
     }
     const subjectIds = item.staff_subjects
       ? item.staff_subjects.map((ss) => ss.subject_id)
@@ -47,15 +50,13 @@ export const staffService = {
       for (const subId of subjectIds) {
         const subExists = await subjectsRepository.findById(subId);
         if (!subExists) {
-          const error = new Error(`Гурток з ID ${subId} не знайдено`);
-          error.status = 400;
-          throw error;
+          throw new BadRequestError(`Гурток з ID ${subId} не знайдено`);
         }
       }
     }
 
     const staffData = {
-      name,
+      name: name.trim(),
       position,
       salary: salary !== undefined ? salary : BASE_SALARY,
       allowance: allowance !== undefined ? allowance : 0,
@@ -73,9 +74,7 @@ export const staffService = {
   async update(id, body) {
     const existing = await staffRepository.findById(id);
     if (!existing) {
-      const error = new Error('Співробітника не знайдено');
-      error.status = 404;
-      throw error;
+      throw new NotFoundError('Співробітника не знайдено');
     }
 
     const { name, position, salary, allowance, groupId, group_id, subjectIds } = body;
@@ -85,27 +84,46 @@ export const staffService = {
       for (const subId of subjectIds) {
         const subExists = await subjectsRepository.findById(subId);
         if (!subExists) {
-          const error = new Error(`Гурток з ID ${subId} не знайдено`);
-          error.status = 400;
-          throw error;
+          throw new BadRequestError(`Гурток з ID ${subId} не знайдено`);
         }
       }
     }
 
     const updatedStaffData = {
       ...existing.data,
-      ...(name !== undefined && { name }),
+      ...(name !== undefined && { name: name.trim() }),
       ...(position !== undefined && { position }),
       ...(salary !== undefined && { salary }),
       ...(allowance !== undefined && { allowance }),
     };
 
-    await staffRepository.update(id, updatedStaffData, finalGroupId);
+    const resolvedGroupId = finalGroupId !== undefined ? finalGroupId : existing.group_id;
+    await staffRepository.update(id, updatedStaffData, resolvedGroupId);
 
     if (subjectIds !== undefined) {
       await staffRepository.setStaffSubjects(id, subjectIds);
     }
 
     return this.getById(id);
+  },
+
+  async delete(id) {
+    const existing = await staffRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Співробітника не знайдено');
+    }
+
+    try {
+      await staffRepository.delete(id);
+    } catch (error) {
+      if (error.code === 'P2003') {
+        throw new ConflictError(
+          'Не можна видалити співробітника, до якого прив’язані пов’язані записи',
+        );
+      }
+      throw error;
+    }
+
+    return { message: 'Співробітника видалено' };
   },
 };

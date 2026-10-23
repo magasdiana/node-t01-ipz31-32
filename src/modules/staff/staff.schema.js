@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { idParam } from '../../lib/schemas.js';
 
 const ALLOWED_POSITIONS = ['teacher', 'educator', 'assistant', 'admin', 'manager'];
 
@@ -15,3 +16,22 @@ export const createStaffSchema = z.object({
 });
 
 export const updateStaffSchema = createStaffSchema.partial();
+
+
+export const createStaffValidation = z.object({
+  body: createStaffSchema,
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});
+
+export const updateStaffValidation = z.object({
+  body: updateStaffSchema,
+  params: idParam,
+  query: z.object({}).optional(),
+});
+
+export const getOrDeleteStaffValidation = z.object({
+  body: z.object({}).optional(),
+  params: idParam,
+  query: z.object({}).optional(),
+});

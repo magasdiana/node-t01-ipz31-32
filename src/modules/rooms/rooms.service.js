@@ -1,6 +1,5 @@
 import { ROOM } from "../../config/constants.js";
 import {
-  BadRequestError,
   ConflictError,
   NotFoundError,
 } from "../../lib/errors.js";
@@ -11,18 +10,6 @@ function roomDto(row) {
   return toDto(row, {
     groupsCount: row._count?.groups ?? 0,
   });
-}
-
-function validateName(name) {
-  if (typeof name !== "string" || !name.trim()) {
-    throw new BadRequestError("Назва кімнати є обов'язковою");
-  }
-}
-
-function validateCost(cost) {
-  if (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0) {
-    throw new BadRequestError("Вартість має бути невід'ємним числом");
-  }
 }
 
 export const roomsService = {
@@ -45,10 +32,7 @@ export const roomsService = {
   },
 
   async create(input) {
-    validateName(input.name);
-
-    const cost = input.cost ?? ROOM.ROOM_COST_DEFAULT;
-    validateCost(cost);
+    const cost = input.cost !== undefined ? input.cost : ROOM.ROOM_COST_DEFAULT;
 
     const row = await roomsRepository.create({
       data: {
@@ -70,21 +54,15 @@ export const roomsService = {
     const nextData = { ...existing.data };
 
     if (input.name !== undefined) {
-      nextData.name = input.name;
+      nextData.name = input.name.trim();
     }
 
     if (input.cost !== undefined) {
       nextData.cost = input.cost;
     }
 
-    validateName(nextData.name);
-    validateCost(nextData.cost);
-
     const row = await roomsRepository.update(id, {
-      data: {
-        ...nextData,
-        name: nextData.name.trim(),
-      },
+      data: nextData,
     });
 
     return roomDto(row);
