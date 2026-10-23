@@ -12,7 +12,7 @@ export const LIMITS = {
   TEACHER_MAX_MULTIPLIER: 3, // FR-16, викладачів можна брати у x2 або x3
 };
 
-// ---------- Припущення A1-A4 (розділ 8 ТЗ) ----------
+// ---------- Бізнес-правила A1-A4 (розділ 8 ТЗ) ----------
 export const ASSUMPTIONS = {
   A1_WORKING_DAYS_PER_MONTH: 22, // для розрахунку харчування
   A2_DISCOUNT_MODE: "multiplicative", // пільга і річна знижка множаться
@@ -30,8 +30,8 @@ export const DEFAULT_PRICES = {
   // FR-24: пільги у відсотках (10/20/30). NONE = без пільги
   BENEFIT_PERCENT: { NONE: 0, LEVEL_1: 10, LEVEL_2: 20, LEVEL_3: 30 },
   ANNUAL_PAYMENT_PERCENT: 12, // FR-26
-  // ПРИПУЩЕННЯ: знижка застосовується до всієї суми рахунку (навчання + харчування)
-  DISCOUNT_APPLIES_TO: "total",
+  // Підтверджено замовником: знижки діють лише на навчання, харчування без знижок
+  DISCOUNT_APPLIES_TO: "tuition",
   // ПРИПУЩЕННЯ: собівартість харчування = ціна харчування * коефіцієнт
   MEAL_COST_RATIO: 1.0,
 };
@@ -70,8 +70,8 @@ export const SCHEDULE = {
   DAYS: ["mon", "tue", "wed", "thu", "fri"], // ПРИПУЩЕННЯ: лише робочі дні
   DAY_START: "09:00", // ПРИПУЩЕННЯ: початок занять
   SLOTS_PER_DAY: 8, // ПРИПУЩЕННЯ: 8 слотів по 30 хв на день
-  LESSONS_PER_SUBJECT_PER_WEEK: 1, // ПРИПУЩЕННЯ: 1 заняття кожного гуртка на тиждень для групи
-  MAX_SUBJECT_LESSONS_PER_DAY: 2, // ПРИПУЩЕННЯ: не більше 2 занять гуртків на день для групи
+  LESSONS_PER_SUBJECT_PER_WEEK: 1, // Підтверджено замовником: кожен гурток 1 раз на тиждень
+  MAX_SUBJECT_LESSONS_PER_DAY: 2, // Підтверджено замовником: максимум 2 заняття на день
 };
 
 // ---------- Звіти (розділ 4.7 ТЗ) ----------
