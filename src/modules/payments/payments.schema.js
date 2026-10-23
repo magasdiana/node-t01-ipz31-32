@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { idParam } from '../../lib/schemas.js';
 
 export const createPaymentSchema = z.object({
   childId: z.number({ required_error: 'childId є обов’язковим' }).int().positive(),
@@ -14,4 +15,22 @@ export const createPaymentSchema = z.object({
 
 export const getPaymentsQuerySchema = z.object({
   childId: z.coerce.number().int().positive().optional()
+});
+
+export const createPaymentValidation = z.object({
+  body: createPaymentSchema,
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});
+
+export const getPaymentsValidation = z.object({
+  body: z.object({}).optional(),
+  params: z.object({}).optional(),
+  query: getPaymentsQuerySchema.optional(),
+});
+
+export const getOrDeletePaymentValidation = z.object({
+  body: z.object({}).optional(),
+  params: idParam,
+  query: z.object({}).optional(),
 });

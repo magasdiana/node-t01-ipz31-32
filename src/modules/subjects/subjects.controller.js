@@ -1,39 +1,29 @@
-import { subjectsService } from './subjects.service.js';
+import { asyncHandler } from "../../lib/asyncHandler.js";
+import { subjectsService } from "./subjects.service.js";
 
 export const subjectsController = {
-  async getAll(req, res, next) {
-    try {
-      const data = await subjectsService.getAll();
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  getAll: asyncHandler(async (req, res) => {
+    res.json(await subjectsService.getAll());
+  }),
 
-  async getById(req, res, next) {
-    try {
-      const data = await subjectsService.getById(req.params.id);
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  getById: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    res.json(await subjectsService.getById(id));
+  }),
 
-  async create(req, res, next) {
-    try {
-      const data = await subjectsService.create(req.body);
-      res.status(201).json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  create: asyncHandler(async (req, res) => {
+    const body = req.validated.body;
+    res.status(201).json(await subjectsService.create(body));
+  }),
 
-  async update(req, res, next) {
-    try {
-      const data = await subjectsService.update(req.params.id, req.body);
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  update: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    const body = req.validated.body;
+    res.json(await subjectsService.update(id, body));
+  }),
+
+  delete: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    res.json(await subjectsService.delete(id));
+  }),
 };
