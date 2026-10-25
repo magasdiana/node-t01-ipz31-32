@@ -46,20 +46,19 @@ export const STAFF_POSITIONS = [
   "admin",
   "manager",
   "teacher",
-  "caregiver",
+  "educator",
   "assistant",
 ];
 
 export const SALARY = {
-  ADMIN: 0, // ПРИПУЩЕННЯ: власник не отримує зарплату з садка, змініть за потреби
+  ADMIN: 0,
   MANAGER: 80000,
   TEACHER: 40000,
-  CAREGIVER_BASE: 40000, // A3
-  ASSISTANT_BASE: 40000, // A3
-  CAREGIVER_BONUS_PER_EXTRA_CHILD: 5000, // FR-11, за кожну дитину після 12-ї
-  ASSISTANT_BONUS_PER_EXTRA_CHILD: 3000, // FR-11
+  EDUCATOR_BASE: 40000,
+  ASSISTANT_BASE: 40000,
+  EDUCATOR_BONUS_PER_EXTRA_CHILD: 5000,
+  ASSISTANT_BONUS_PER_EXTRA_CHILD: 3000,
 };
-
 // ---------- Розклад (розділ 4.5 ТЗ) ----------
 export const SCHEDULE = {
   STAY_HOURS: 8, // FR-17
