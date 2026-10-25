@@ -1,20 +1,17 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from "../../lib/prisma.js";
 
 export const staffRepository = {
   async findAll() {
     return prisma.staff.findMany({
-      include: {
-        staff_subjects: true,
-      },
+      include: { staffSubjects: true },
+      orderBy: { id: "asc" },
     });
   },
 
   async findById(id) {
     return prisma.staff.findUnique({
       where: { id: Number(id) },
-      include: {
-        staff_subjects: true,
-      },
+      include: { staffSubjects: true },
     });
   },
 
@@ -22,7 +19,7 @@ export const staffRepository = {
     return prisma.staff.create({
       data: {
         data,
-        group_id: groupId ? Number(groupId) : null,
+        groupId: groupId ? Number(groupId) : null,
       },
     });
   },
@@ -32,25 +29,31 @@ export const staffRepository = {
       where: { id: Number(id) },
       data: {
         data,
-        group_id: groupId !== undefined ? (groupId ? Number(groupId) : null) : undefined,
+        groupId:
+          groupId !== undefined
+            ? groupId
+              ? Number(groupId)
+              : null
+            : undefined,
       },
     });
   },
 
+  // Видалення старих зв'язків і створення нових в одній транзакції,
+  // щоб при помилці викладач не лишився без гуртків
   async setStaffSubjects(staffId, subjectIds) {
-    // Спочатку видаляємо старі зв'язки
-    await prisma.staffSubject.deleteMany({
-      where: { staff_id: Number(staffId) },
-    });
+    const sid = Number(staffId);
+    const ids = [...new Set((subjectIds ?? []).map(Number))];
 
-    // Якщо є нові ID гуртків, створюємо нові зв'язки
-    if (subjectIds && subjectIds.length > 0) {
-      await prisma.staffSubject.createMany({
-        data: subjectIds.map((subjectId) => ({
-          staff_id: Number(staffId),
-          subject_id: Number(subjectId),
-        })),
-      });
-    }
+    await prisma.$transaction([
+      prisma.staffSubject.deleteMany({ where: { staffId: sid } }),
+      ...(ids.length > 0
+        ? [
+            prisma.staffSubject.createMany({
+              data: ids.map((subjectId) => ({ staffId: sid, subjectId })),
+            }),
+          ]
+        : []),
+    ]);
   },
 };

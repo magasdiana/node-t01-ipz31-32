@@ -9,12 +9,12 @@ export const staffService = {
   async getAll() {
     const items = await staffRepository.findAll();
     return items.map((item) => {
-      const subjectIds = item.staff_subjects
-        ? item.staff_subjects.map((ss) => ss.subject_id)
+      const subjectIds = item.staffSubjects
+        ? item.staffSubjects.map((ss) => ss.subjectId)
         : [];
       return {
         id: item.id,
-        group_id: item.group_id,
+        group_id: item.groupId,
         ...item.data,
         subjectIds,
       };
@@ -28,12 +28,12 @@ export const staffService = {
       error.status = 404;
       throw error;
     }
-    const subjectIds = item.staff_subjects
-      ? item.staff_subjects.map((ss) => ss.subject_id)
+    const subjectIds = item.staffSubjects
+      ? item.staffSubjects.map((ss) => ss.subjectId)
       : [];
     return {
       id: item.id,
-      group_id: item.group_id,
+      group_id: item.groupId,
       ...item.data,
       subjectIds,
     };
