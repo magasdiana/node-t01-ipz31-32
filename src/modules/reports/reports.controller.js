@@ -1,2 +1,22 @@
-// Шар "controller" модуля reports. Реалізація з'явиться далі.
-export {};
+import { reportsService } from './reports.service.js';
+
+export const reportsController = {
+  async getProfit(req, res, next) {
+    try {
+      const groupId = req.query.groupId;
+      const result = await reportsService.getProfit(groupId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getMinRooms(req, res, next) {
+    try {
+      const result = await reportsService.getMinRooms();
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+};
