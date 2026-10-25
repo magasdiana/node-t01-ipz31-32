@@ -1,5 +1,5 @@
 import { reportsRepository } from './reports.repository.js';
-import { calcProfit, minRooms, findOptimum } from './reports.calc.js';
+import { calcProfit, minRooms } from './reports.calc.js';
 
 export const reportsService = {
   async getProfit(groupIdQuery) {
@@ -8,12 +8,39 @@ export const reportsService = {
     const rooms = await reportsRepository.getRooms();
     const staff = await reportsRepository.getStaffWithSalaries();
 
+     
+    let filteredPayments = payments;
+    let filteredStaff = staff;
+    let filteredRooms = rooms;
 
-    const revenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    if (groupIdQuery !== undefined) {
+      const group = groups.find((g) => g.id === groupIdQuery);
+      if (!group) {
+        const error = new Error('Групу не знайдено');
+        error.status = 404;
+        throw error;
+      }
+
+      
+      filteredStaff = staff.filter((s) => s.groupId === groupIdQuery);
+
+       
+      filteredPayments = payments.filter((p) => p.child?.groupId === groupIdQuery);
+
+       
+      if (group.roomId) {
+        filteredRooms = rooms.filter((r) => r.id === group.roomId);
+      } else {
+        filteredRooms = [];
+      }
+    }
+
+     
+    const revenue = filteredPayments.reduce((sum, p) => sum + (Number(p.data?.amount) || 0), 0);
     
-    const totalSalaries = staff.reduce((sum, s) => sum + (s.salary || 40000), 0);
-    const totalAllowances = staff.reduce((sum, s) => sum + (s.allowance || 0), 0);
-    const totalRoomsCost = rooms.reduce((sum, r) => sum + (r.cost || 0), 0);
+    const totalSalaries = filteredStaff.reduce((sum, s) => sum + (Number(s.data?.salary) || 40000), 0);
+    const totalAllowances = filteredStaff.reduce((sum, s) => sum + (Number(s.data?.allowance) || 0), 0);
+    const totalRoomsCost = filteredRooms.reduce((sum, r) => sum + (Number(r.data?.cost) || 0), 0);
 
     const expenses = {
       rooms: totalRoomsCost,
@@ -26,11 +53,6 @@ export const reportsService = {
 
     if (groupIdQuery !== undefined) {
       const group = groups.find((g) => g.id === groupIdQuery);
-      if (!group) {
-        const error = new Error('Групу не знайдено');
-        error.status = 404;
-        throw error;
-      }
       return { group, profitData };
     }
 
@@ -45,12 +67,22 @@ export const reportsService = {
 
     const totalChildren = groups.reduce((sum, g) => sum + (g._count?.children || 0), 0);
     const childrenPerRoom = groups.length > 0 ? Math.round(totalChildren / groups.length) : 10;
-    const revenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    const netRevenuePerChild = totalChildren > 0 ? revenue / totalChildren : 0;
-    const perRoomCost = rooms.length > 0 ? (rooms[0].cost || 5000) : 5000;
-    const fixedCosts = staff.reduce((sum, s) => sum + (s.salary || 40000) + (s.allowance || 0), 0);
-
     
+     
+    const revenue = payments.reduce((sum, p) => sum + (Number(p.data?.amount) || 0), 0);
+    const netRevenuePerChild = totalChildren > 0 ? revenue / totalChildren : 0;
+    
+     
+    const firstRoomCost = rooms.length > 0 ? Number(rooms[0].data?.cost) : NaN;
+    const perRoomCost = !isNaN(firstRoomCost) ? firstRoomCost : 5000;
+
+     
+    const fixedCosts = staff.reduce((sum, s) => {
+      const salary = Number(s.data?.salary) || 40000;
+      const allowance = Number(s.data?.allowance) || 0;
+      return sum + salary + allowance;
+    }, 0);
+
     return minRooms({
       childrenPerRoom,
       netRevenuePerChild,
