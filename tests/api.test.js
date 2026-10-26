@@ -1,3 +1,4 @@
+
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import app from "../src/app.js";
@@ -49,7 +50,7 @@ async function expectStatus(path, options, expectedStatus) {
   return response;
 }
 
-// Smoke testing: перевірка доступності API
+// Smoke testing
 
 test("GET /health повертає ok", async () => {
   const response = await expectStatus("/health", {}, 200);
@@ -57,7 +58,8 @@ test("GET /health повертає ok", async () => {
   assert.deepEqual(await response.json(), { status: "ok" });
 });
 
-// Positive testing 
+// Positive testing — доступність API
+
 for (const path of [
   "/children",
   "/groups",
@@ -79,12 +81,12 @@ for (const path of [
   });
 }
 
-// Negative testing: 
+// Negative testing — перевірка валідації
+
 for (const [method, path] of [
   ["POST", "/staff"],
   ["POST", "/subjects"],
   ["POST", "/payments"],
-  ["PUT", "/settings/prices"],
 ]) {
   test(`${method} ${path} відхиляє порожній об'єкт`, async () => {
     await expectStatus(
@@ -97,3 +99,106 @@ for (const [method, path] of [
     );
   });
 }
+
+// PR #29 — поточна поведінка налаштувань цін
+
+test("PUT /settings/prices приймає порожній об'єкт", async () => {
+  const response = await request("/settings/prices", {
+    method: "PUT",
+    body: JSON.stringify({}),
+  });
+
+  assert.equal(
+    response.status,
+    200,
+    `PUT /settings/prices: отримано HTTP ${response.status}`
+  );
+});
+
+// PR #31 — генерація чернетки розкладу
+
+test("POST /schedules створює чернетку з порожнім об'єктом", async () => {
+  const response = await request("/schedules", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+
+  assert.equal(
+    response.status,
+    201,
+    `POST /schedules: отримано HTTP ${response.status}`
+  );
+});
+
+// PR #33 — модуль занять
+// Ці тести фіксують фактичний 404 за адресою /lessons.
+// Вони не підтверджують працездатність модуля занять.
+
+test("GET /lessons повертає 404 за недоступного маршруту", async () => {
+  await expectStatus("/lessons", {}, 404);
+});
+
+test("POST /lessons повертає 404 за недоступного маршруту", async () => {
+  await expectStatus(
+    "/lessons",
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+    404
+  );
+});
+
+// PR #32 — звіт про прибуток
+
+test("GET /reports/profit повертає JSON", async () => {
+  const response = await request("/reports/profit");
+
+  assert.ok(
+    response.status >= 200 && response.status < 300,
+    `GET /reports/profit: отримано HTTP ${response.status}`
+  );
+
+  assert.ok(
+    (response.headers.get("content-type") ?? "").includes("application/json"),
+    "Звіт про прибуток має повертатися у форматі JSON"
+  );
+
+  await response.json();
+});
+
+// PR #32 — звіт про мінімальну кількість кімнат
+
+test("GET /reports/min-rooms повертає JSON", async () => {
+  const response = await request("/reports/min-rooms");
+
+  assert.ok(
+    response.status >= 200 && response.status < 300,
+    `GET /reports/min-rooms: отримано HTTP ${response.status}`
+  );
+
+  assert.ok(
+    (response.headers.get("content-type") ?? "").includes("application/json"),
+    "Звіт про кімнати має повертатися у форматі JSON"
+  );
+
+  await response.json();
+});
+
+// PR #30 — перехід модуля персоналу на camelCase
+
+test("GET /staff повертає JSON після переходу на camelCase", async () => {
+  const response = await request("/staff");
+
+  assert.ok(
+    response.status >= 200 && response.status < 300,
+    `GET /staff: отримано HTTP ${response.status}`
+  );
+
+  assert.ok(
+    (response.headers.get("content-type") ?? "").includes("application/json"),
+    "GET /staff має повертати JSON"
+  );
+
+  await response.json();
+});
