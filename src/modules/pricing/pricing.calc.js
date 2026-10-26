@@ -36,7 +36,6 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const mappedKey = BENEFIT_MAP[benefitType] || benefitType;
     const benefitDict = prices.benefitPercent || prices.BENEFIT_PERCENT || prices.benefitDiscounts || {};
 
-    // Шукаємо або за LEVEL_3, або за max, або в нижньому регістрі
     const rawBenefitPercent = benefitDict[mappedKey]
         ?? benefitDict[benefitType]
         ?? benefitDict[String(benefitType).toLowerCase()]
@@ -73,10 +72,13 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const mealsAmount = mealsPerMonth * months;
     const subtotal = tuitionAmount + mealsAmount;
 
-    // 7. Множення знижок за ТЗ: (1 - пільга) * (1 - 0.12, якщо рік)
+    // 7. Знижки діють ТІЛЬКИ на навчання (харчування без знижок):
     const discountMultiplier = (1 - benefitDiscount) * (1 - yearlyDiscount);
-    const total = Number((subtotal * discountMultiplier).toFixed(2));
-    const discountAmount = Number((subtotal - total).toFixed(2));
+    const tuitionDiscounted = Number((tuitionAmount * discountMultiplier).toFixed(2));
+    const discountAmount = Number((tuitionAmount - tuitionDiscounted).toFixed(2));
+
+    // Разом: навчання зі знижкою + повна вартість харчування
+    const total = Number((tuitionDiscounted + mealsAmount).toFixed(2));
 
     return {
         period,

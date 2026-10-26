@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { calcInvoice } from '../src/modules/pricing/pricing.calc.js';
 
 test('Dev 3: Тести розрахунку рахунку (FR-23...FR-28)', async (t) => {
-    // --- 1. Контрольні приклади з розділу 4.2 ТЗ ---
+    // --- 1. Контрольні приклади ---
     await t.test('Приклад 1: Вік 2, без пільги, місяць = 21 600', () => {
         // 15 000 + 300 * 22 = 21 600
         const res = calcInvoice({ age: 2, benefitType: 'none', period: 'month' });
@@ -17,55 +17,73 @@ test('Dev 3: Тести розрахунку рахунку (FR-23...FR-28)', as
         ]);
     });
 
-    await t.test('Приклад 2: Вік 4, пільга 20% (medium), місяць = 20 800', () => {
-        // (15 000 + 500 * 22) * 0.8 = 26 000 * 0.8 = 20 800
+    await t.test('Приклад 2: Вік 4, пільга 20% (medium), місяць = 23 000', () => {
+        // Навчання: 15 000 * 0.8 = 12 000 (знижка 3 000)
+        // Харчування: 500 * 22 = 11 000
+        // Разом: 12 000 + 11 000 = 23 000
         const res = calcInvoice({ age: 4, benefitType: 'medium', period: 'month' });
-        assert.equal(res.total, 20800);
+        assert.equal(res.total, 23000);
         assert.equal(res.subtotal, 26000);
         assert.equal(res.discounts.benefitPercent, 0.2);
-        assert.equal(res.discounts.discountAmount, 5200);
+        assert.equal(res.discounts.discountAmount, 3000);
         assert.equal(res.items.length, 2);
     });
 
-    await t.test('Приклад 3: Вік 4, пільга 20% (medium), рік = 219 648', () => {
-        // 26 000 * 12 * 0.8 * 0.88 = 219 648
+    await t.test('Приклад 3: Вік 4, пільга 20% (medium), рік = 258 720', () => {
+        // Навчання за рік: 180 000 * 0.8 * 0.88 = 126 720 (знижка 53 280)
+        // Харчування за рік: 500 * 22 * 12 = 132 000
+        // Разом: 126 720 + 132 000 = 258 720
         const res = calcInvoice({ age: 4, benefitType: 'medium', period: 'year' });
-        assert.equal(res.total, 219648);
+        assert.equal(res.total, 258720);
         assert.equal(res.subtotal, 312000);
         assert.equal(res.months, 12);
         assert.equal(res.discounts.yearlyPercent, 0.12);
+        assert.equal(res.discounts.discountAmount, 53280);
     });
 
-    await t.test('Приклад 4: Вік 5, пільга 30% (max), рік = 208 454.40', () => {
-        // (15 000 + 600 * 22) * 12 * 0.7 * 0.88 = 28 200 * 12 * 0.7 * 0.88 = 208 454.40
+    await t.test('Приклад 4: Вік 5, пільга 30% (max), рік = 269 280', () => {
+        // Навчання за рік: 180 000 * 0.7 * 0.88 = 110 880 (знижка 69 120)
+        // Харчування за рік: 600 * 22 * 12 = 158 400
+        // Разом: 110 880 + 158 400 = 269 280
         const res = calcInvoice({ age: 5, benefitType: 'max', period: 'year' });
-        assert.equal(res.total, 208454.4);
+        assert.equal(res.total, 269280);
         assert.equal(res.subtotal, 338400);
+        assert.equal(res.discounts.discountAmount, 69120);
     });
 
     // --- 2. Перевірка кожної пільги окремо (10%, 20%, 30%) ---
-    await t.test('Пільга 10% (min), вік 3, місяць: (15 000 + 400 * 22) * 0.9 = 21 420', () => {
+    await t.test('Пільга 10% (min), вік 3, місяць: 15 000 * 0.9 + 400 * 22 = 22 300', () => {
+        // 13 500 + 8 800 = 22 300
         const res = calcInvoice({ age: 3, benefitType: 'min', period: 'month' });
-        assert.equal(res.total, 21420);
+        assert.equal(res.total, 22300);
         assert.equal(res.discounts.benefitPercent, 0.1);
+        assert.equal(res.discounts.discountAmount, 1500);
     });
 
-    await t.test('Пільга 20% (medium), вік 3, місяць: 23 800 * 0.8 = 19 040', () => {
+    await t.test('Пільга 20% (medium), вік 3, місяць: 15 000 * 0.8 + 400 * 22 = 20 800', () => {
+        // 12 000 + 8 800 = 20 800
         const res = calcInvoice({ age: 3, benefitType: 'medium', period: 'month' });
-        assert.equal(res.total, 19040);
+        assert.equal(res.total, 20800);
+        assert.equal(res.discounts.discountAmount, 3000);
     });
 
-    await t.test('Пільга 30% (max), вік 3, місяць: 23 800 * 0.7 = 16 660', () => {
+    await t.test('Пільга 30% (max), вік 3, місяць: 15 000 * 0.7 + 400 * 22 = 19 300', () => {
+        // 10 500 + 8 800 = 19 300
         const res = calcInvoice({ age: 3, benefitType: 'max', period: 'month' });
-        assert.equal(res.total, 16660);
+        assert.equal(res.total, 19300);
+        assert.equal(res.discounts.discountAmount, 4500);
     });
 
-    // --- 3. Рік без пільги (знижка 12%) ---
-    await t.test('Рік без пільги, вік 2: 21 600 * 12 * 0.88 = 228 096', () => {
+    // --- 3. Рік без пільги (знижка 12% тільки на навчання) ---
+    await t.test('Рік без пільги, вік 2: 180 000 * 0.88 + 300 * 22 * 12 = 237 600', () => {
+        // Навчання: 180 000 * 0.88 = 158 400 (знижка 21 600)
+        // Харчування: 6 600 * 12 = 79 200
+        // Разом: 158 400 + 79 200 = 237 600
         const res = calcInvoice({ age: 2, benefitType: 'none', period: 'year' });
-        assert.equal(res.total, 228096);
+        assert.equal(res.total, 237600);
         assert.equal(res.discounts.benefitPercent, 0);
         assert.equal(res.discounts.yearlyPercent, 0.12);
+        assert.equal(res.discounts.discountAmount, 21600);
     });
 
     // --- 4. Граничні віки: 2 і 5 років ---
