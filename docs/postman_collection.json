@@ -1,63 +1,788 @@
 {
-	"info": {
-		"name": "Kindergarten REST API (QA)",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Healthcheck",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
-			}
-		},
-		{
-			"name": "Get Children",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/children", "host": ["{{baseUrl}}"], "path": ["children"] }
-			}
-		},
-		{
-			"name": "Get Groups",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/groups", "host": ["{{baseUrl}}"], "path": ["groups"] }
-			}
-		},
-		{
-			"name": "Get Rooms",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/rooms", "host": ["{{baseUrl}}"], "path": ["rooms"] }
-			}
-		},
-		{
-			"name": "Get Invoice (Month)",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/children/1/invoice?period=month", "host": ["{{baseUrl}}"], "path": ["children", "1", "invoice"], "query": [{"key": "period", "value": "month"}] }
-			}
-		},
-		{
-			"name": "Get Prices",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/settings/prices", "host": ["{{baseUrl}}"], "path": ["settings", "prices"] }
-			}
-		},
-		{
-			"name": "Get Report Profit",
-			"request": {
-				"method": "GET",
-				"url": { "raw": "{{baseUrl}}/reports/profit", "host": ["{{baseUrl}}"], "path": ["reports", "profit"] }
-			}
-		}
-	],
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://localhost:3000"
-		}
-	]
+  "info": {
+    "name": "Kindergarten REST API (QA)",
+    "description": "QA collection for existing API endpoints, including valid and invalid requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Healthcheck",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Get Children",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/children",
+          "host": ["{{baseUrl}}"],
+          "path": ["children"]
+        }
+      }
+    },
+    {
+      "name": "Get Child by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/children/{{childId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["children", "{{childId}}"]
+        }
+      }
+    },
+    {
+      "name": "Create Child - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"QA Test Child\",\n  \"birthDate\": \"2023-10-24\",\n  \"guardians\": [\"Guardian 1\", \"Guardian 2\"],\n  \"benefitType\": \"none\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/children",
+          "host": ["{{baseUrl}}"],
+          "path": ["children"]
+        }
+      }
+    },
+    {
+      "name": "Create Child - Invalid Age",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Invalid Age Child\",\n  \"birthDate\": \"2020-10-24\",\n  \"guardians\": []\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/children",
+          "host": ["{{baseUrl}}"],
+          "path": ["children"]
+        }
+      }
+    },
+    {
+      "name": "Create Child - Four Guardians",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Four Guardians Child\",\n  \"birthDate\": \"2023-10-24\",\n  \"guardians\": [\"Guardian 1\", \"Guardian 2\", \"Guardian 3\", \"Guardian 4\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/children",
+          "host": ["{{baseUrl}}"],
+          "path": ["children"]
+        }
+      }
+    },
+    {
+      "name": "Update Child",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated QA Child\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/children/{{childId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["children", "{{childId}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Child",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/children/{{childId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["children", "{{childId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Groups",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/groups",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups"]
+        }
+      }
+    },
+    {
+      "name": "Get Group by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/groups/{{groupId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups", "{{groupId}}"]
+        }
+      }
+    },
+    {
+      "name": "Create Group - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"QA Test Group\",\n  \"age\": 3,\n  \"limit\": 20\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/groups",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups"]
+        }
+      }
+    },
+    {
+      "name": "Create Group - More Than 20 Children",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Oversized QA Group\",\n  \"age\": 3,\n  \"limit\": 21\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/groups",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups"]
+        }
+      }
+    },
+    {
+      "name": "Create Group - Invalid Age",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Invalid Age Group\",\n  \"age\": 6,\n  \"limit\": 20\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/groups",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups"]
+        }
+      }
+    },
+    {
+      "name": "Update Group",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated QA Group\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/groups/{{groupId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups", "{{groupId}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Group",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/groups/{{groupId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["groups", "{{groupId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Rooms",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/rooms",
+          "host": ["{{baseUrl}}"],
+          "path": ["rooms"]
+        }
+      }
+    },
+    {
+      "name": "Get Room by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/rooms/{{roomId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["rooms", "{{roomId}}"]
+        }
+      }
+    },
+    {
+      "name": "Create Room - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"QA Test Room\",\n  \"cost\": 1000\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/rooms",
+          "host": ["{{baseUrl}}"],
+          "path": ["rooms"]
+        }
+      }
+    },
+    {
+      "name": "Create Room - Negative Cost",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Invalid Cost Room\",\n  \"cost\": -1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/rooms",
+          "host": ["{{baseUrl}}"],
+          "path": ["rooms"]
+        }
+      }
+    },
+    {
+      "name": "Update Room",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated QA Room\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/rooms/{{roomId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["rooms", "{{roomId}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Room",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/rooms/{{roomId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["rooms", "{{roomId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Staff",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/staff",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff"]
+        }
+      }
+    },
+    {
+      "name": "Get Staff by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/staff/{{staffId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "{{staffId}}"]
+        }
+      }
+    },
+    {
+      "name": "Create Staff - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"QA Test Educator\",\n  \"position\": \"educator\",\n  \"salary\": 20000,\n  \"allowance\": 0,\n  \"subjectIds\": []\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/staff",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff"]
+        }
+      }
+    },
+    {
+      "name": "Create Staff - Invalid Position",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Invalid Position Staff\",\n  \"position\": \"unknown\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/staff",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff"]
+        }
+      }
+    },
+    {
+      "name": "Update Staff",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated QA Staff\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/staff/{{staffId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "{{staffId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Subjects",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/subjects",
+          "host": ["{{baseUrl}}"],
+          "path": ["subjects"]
+        }
+      }
+    },
+    {
+      "name": "Get Subject by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/subjects/{{subjectId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["subjects", "{{subjectId}}"]
+        }
+      }
+    },
+    {
+      "name": "Create Subject - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"QA Test Subject\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/subjects",
+          "host": ["{{baseUrl}}"],
+          "path": ["subjects"]
+        }
+      }
+    },
+    {
+      "name": "Create Subject - Empty Name",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/subjects",
+          "host": ["{{baseUrl}}"],
+          "path": ["subjects"]
+        }
+      }
+    },
+    {
+      "name": "Update Subject",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated QA Subject\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/subjects/{{subjectId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["subjects", "{{subjectId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Invoice (Month)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/children/{{childId}}/invoice?period=month",
+          "host": ["{{baseUrl}}"],
+          "path": ["children", "{{childId}}", "invoice"],
+          "query": [
+            {
+              "key": "period",
+              "value": "month"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Invoice (Year)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/children/{{childId}}/invoice?period=year",
+          "host": ["{{baseUrl}}"],
+          "path": ["children", "{{childId}}", "invoice"],
+          "query": [
+            {
+              "key": "period",
+              "value": "year"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Prices",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/settings/prices",
+          "host": ["{{baseUrl}}"],
+          "path": ["settings", "prices"]
+        }
+      }
+    },
+    {
+      "name": "Update Prices - Valid",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tuitionPerMonth\": 15000,\n  \"mealPerDayByAge\": {\n    \"2\": 300,\n    \"3\": 400,\n    \"4\": 500,\n    \"5\": 600\n  },\n  \"benefitDiscounts\": {\n    \"none\": 0,\n    \"min\": 0.1,\n    \"medium\": 0.2,\n    \"max\": 0.3\n  },\n  \"yearlyDiscount\": 0.12\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/settings/prices",
+          "host": ["{{baseUrl}}"],
+          "path": ["settings", "prices"]
+        }
+      }
+    },
+    {
+      "name": "Update Prices - Negative Tuition",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tuitionPerMonth\": -1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/settings/prices",
+          "host": ["{{baseUrl}}"],
+          "path": ["settings", "prices"]
+        }
+      }
+    },
+    {
+      "name": "Update Prices - Invalid Yearly Discount",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"yearlyDiscount\": 1.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/settings/prices",
+          "host": ["{{baseUrl}}"],
+          "path": ["settings", "prices"]
+        }
+      }
+    },
+    {
+      "name": "Update Prices - Empty Body",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/settings/prices",
+          "host": ["{{baseUrl}}"],
+          "path": ["settings", "prices"]
+        }
+      }
+    },
+    {
+      "name": "Get Price History",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/settings/prices/history",
+          "host": ["{{baseUrl}}"],
+          "path": ["settings", "prices", "history"]
+        }
+      }
+    },
+    {
+      "name": "Get Payments",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/payments",
+          "host": ["{{baseUrl}}"],
+          "path": ["payments"]
+        }
+      }
+    },
+    {
+      "name": "Get Payments by Child",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/payments?childId={{childId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["payments"],
+          "query": [
+            {
+              "key": "childId",
+              "value": "{{childId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Payment - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"childId\": 1,\n  \"period\": \"month\",\n  \"periodStart\": \"2026-10\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/payments",
+          "host": ["{{baseUrl}}"],
+          "path": ["payments"]
+        }
+      }
+    },
+    {
+      "name": "Create Payment - Missing Child ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"period\": \"month\",\n  \"periodStart\": \"2026-10\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/payments",
+          "host": ["{{baseUrl}}"],
+          "path": ["payments"]
+        }
+      }
+    },
+    {
+      "name": "Create Payment - Invalid Period",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"childId\": 1,\n  \"period\": \"week\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/payments",
+          "host": ["{{baseUrl}}"],
+          "path": ["payments"]
+        }
+      }
+    },
+    {
+      "name": "Unknown Endpoint - 404",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/route-that-does-not-exist",
+          "host": ["{{baseUrl}}"],
+          "path": ["route-that-does-not-exist"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "childId",
+      "value": "1"
+    },
+    {
+      "key": "groupId",
+      "value": "1"
+    },
+    {
+      "key": "roomId",
+      "value": "1"
+    },
+    {
+      "key": "staffId",
+      "value": "1"
+    },
+    {
+      "key": "subjectId",
+      "value": "1"
+    }
+  ]
 }
