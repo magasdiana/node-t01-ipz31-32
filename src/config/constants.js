@@ -68,7 +68,12 @@ export const SCHEDULE = {
   LESSON_MINUTES: 30, // A4
   DAYS: ["mon", "tue", "wed", "thu", "fri"], // ПРИПУЩЕННЯ: лише робочі дні
   DAY_START: "09:00", // ПРИПУЩЕННЯ: початок занять
-  SLOTS_PER_DAY: 8, // ПРИПУЩЕННЯ: 8 слотів по 30 хв на день
+  FIXED_BREAKS: [
+    { name: "meal_1", start: "09:30", minutes: 30 },
+    { name: "meal_2", start: "12:00", minutes: 30 },
+    { name: "nap", start: "13:00", minutes: 60 },
+    { name: "meal_3", start: "15:30", minutes: 30 },
+  ],
   LESSONS_PER_SUBJECT_PER_WEEK: 1, // Підтверджено замовником: кожен гурток 1 раз на тиждень
   MAX_SUBJECT_LESSONS_PER_DAY: 2, // Підтверджено замовником: максимум 2 заняття на день
 };
