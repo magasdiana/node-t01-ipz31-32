@@ -9,7 +9,7 @@ const roomIdSchema = z.union([
 
 export const groupCreateSchema = z.object({
   name: z.string().trim().min(1, "Вкажіть назву групи"),
-  age: z.coerce.number().int(),
+  age: z.coerce.number().int().min(2, "Вік має бути не менше 2 років").max(5, "Вік має бути не більше 5 років"),
   limit: z.coerce.number().int().positive().max(LIMITS.GROUP_MAX_CHILDREN).optional(),
   roomId: roomIdSchema.optional(),
   room_id: roomIdSchema.optional(),

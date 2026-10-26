@@ -28,9 +28,16 @@ test('Subject schema: відхиляє порожню назву', () => {
 });
 
 // --- GROUPS ---
-test('Group schema: успішно валідує створення групи', () => {
+test('Group schema: успішно валідує створення групи з допустимим віком', () => {
   const valid = groupCreateSchema.safeParse({ name: 'Зірочка', age: 3, roomId: 2 });
   assert.strictEqual(valid.success, true);
+});
+
+test('Group schema: відхиляє вік поза межами діапазону (менше 2 або більше 5)', () => {
+  const invalidTooYoung = groupCreateSchema.safeParse({ name: 'Зірочка', age: 1, roomId: 2 });
+  const invalidTooOld = groupCreateSchema.safeParse({ name: 'Зірочка', age: 6, roomId: 2 });
+  assert.strictEqual(invalidTooYoung.success, false);
+  assert.strictEqual(invalidTooOld.success, false);
 });
 
 test('Group schema: відхиляє невалідний roomId (від’ємне або дробове число)', () => {
