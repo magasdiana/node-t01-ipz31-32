@@ -1,49 +1,11 @@
 import { LIMITS } from "../../config/constants.js";
 import {
-  BadRequestError,
   ConflictError,
   NotFoundError,
 } from "../../lib/errors.js";
 import { toDto, toDtoList } from "../../lib/dto.js";
 import { groupsRepository } from "./groups.repository.js";
 import { ageInYears } from "../../lib/age.js";
-
-function normalizeRoomId(value) {
-  if (value === undefined) return undefined;
-  if (value === null || value === "") return null;
-
-  const id = Number(value);
-
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new BadRequestError("roomId має бути додатним числом або null");
-  }
-
-  return id;
-}
-
-function validateAge(age) {
-  if (!Number.isInteger(age)) {
-    throw new BadRequestError("Вік групи має бути цілим числом");
-  }
-
-  if (age < LIMITS.CHILD_AGE_MIN || age > LIMITS.CHILD_AGE_MAX) {
-    throw new ConflictError(
-      `Вік групи має бути від ${LIMITS.CHILD_AGE_MIN} до ${LIMITS.CHILD_AGE_MAX} років`,
-    );
-  }
-}
-
-function validateLimit(limit) {
-  if (!Number.isInteger(limit) || limit < 1) {
-    throw new BadRequestError("Ліміт групи має бути додатним цілим числом");
-  }
-
-  if (limit > LIMITS.GROUP_MAX_CHILDREN) {
-    throw new ConflictError(
-      `У групі може бути не більше ${LIMITS.GROUP_MAX_CHILDREN} дітей`,
-    );
-  }
-}
 
 function groupDto(row) {
   return toDto(row, {
@@ -93,12 +55,15 @@ export const groupsService = {
 
   async create(input) {
     const limit = input.limit ?? LIMITS.GROUP_MAX_CHILDREN;
-    const roomValue =
-      input.roomId !== undefined ? input.roomId : input.room_id;
-    const roomId = normalizeRoomId(roomValue);
+    const roomId = input.roomId !== undefined ? input.roomId : input.room_id;
 
-    validateAge(input.age);
-    validateLimit(limit);
+    // Бізнес-перевірка ліміту відносно максимального значення константи
+    if (limit > LIMITS.GROUP_MAX_CHILDREN) {
+      throw new ConflictError(
+        `У групі може бути не більше ${LIMITS.GROUP_MAX_CHILDREN} дітей`,
+      );
+    }
+
     await validateRoom(roomId);
 
     const row = await groupsRepository.create({
@@ -128,16 +93,18 @@ export const groupsService = {
       }
     }
 
-    if (typeof nextData.name !== "string" || !nextData.name.trim()) {
-      throw new BadRequestError("Назва групи є обов'язковою");
+    if (nextData.name) {
+      nextData.name = nextData.name.trim();
     }
 
-    nextData.name = nextData.name.trim();
+    if (nextData.limit && nextData.limit > LIMITS.GROUP_MAX_CHILDREN) {
+      throw new ConflictError(
+        `У групі може бути не більше ${LIMITS.GROUP_MAX_CHILDREN} дітей`,
+      );
+    }
 
-    validateAge(nextData.age);
-    validateLimit(nextData.limit);
-
-    if (nextData.age !== existing.data.age) {
+    // Бізнес-правило: перевірка віку дітей у групі
+    if (nextData.age !== undefined && nextData.age !== existing.data.age) {
       const children = await groupsRepository.getChildren(id);
 
       const hasDifferentAge = children.some(
@@ -155,9 +122,7 @@ export const groupsService = {
       input.roomId !== undefined || input.room_id !== undefined;
 
     const roomId = hasRoomId
-      ? normalizeRoomId(
-          input.roomId !== undefined ? input.roomId : input.room_id,
-        )
+      ? (input.roomId !== undefined ? input.roomId : input.room_id)
       : existing.roomId;
 
     if (roomId !== existing.roomId) {
@@ -166,7 +131,7 @@ export const groupsService = {
 
     const row = await groupsRepository.update(id, {
       data: nextData,
-      roomId,
+      roomId: roomId ?? null,
     });
 
     return groupDto(row);
