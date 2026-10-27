@@ -118,4 +118,34 @@ test('Dev 3: Тести розрахунку рахунку (FR-23...FR-28)', as
             /Невідомий тип пільги/
         );
     });
+
+    // --- 6. Перевірка оновлених цін у camelCase (кастомні налаштування) ---
+    await t.test('Оновлені ціни (camelCase) коректно змінюють суму рахунку', () => {
+        const customPrices = {
+            tuitionPerMonth: 20000,
+            mealsPerDayByAge: { 3: 500 },
+            benefitPercent: { NONE: 0 },
+            yearlyDiscountPercent: 15
+        };
+
+        // За місяць: 20 000 + 500 * 22 = 31 000
+        const resMonth = calcInvoice(
+            { age: 3, benefitType: 'none', period: 'month' },
+            customPrices
+        );
+        assert.equal(resMonth.total, 31000);
+        assert.equal(resMonth.items[0].amount, 20000);
+        assert.equal(resMonth.items[1].amount, 11000);
+
+        // За рік (15% знижки лише на навчання):
+        // Навчання: 20 000 * 12 * 0.85 = 204 000
+        // Харчування: 11 000 * 12 = 132 000
+        // Разом: 336 000
+        const resYear = calcInvoice(
+            { age: 3, benefitType: 'none', period: 'year' },
+            customPrices
+        );
+        assert.equal(resYear.total, 336000);
+        assert.equal(resYear.discounts.yearlyPercent, 0.15);
+    });
 });

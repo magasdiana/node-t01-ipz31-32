@@ -4,8 +4,8 @@ export const pricingController = {
     // GET /children/:id/invoice
     async getInvoice(req, res, next) {
         try {
-            const childId = req.params.id;
-            const period = req.query.period || 'month';
+            const childId = req.validated?.params?.id ?? Number(req.params.id);
+            const period = req.validated?.query?.period ?? req.query.period ?? 'month';
             const invoice = await pricingService.getChildInvoice(childId, period);
             res.json(invoice);
         } catch (err) {
@@ -24,7 +24,8 @@ export const pricingController = {
 
     async updatePrices(req, res, next) {
         try {
-            const updated = await pricingService.updatePrices(req.body);
+            const payload = req.validated?.body ?? req.body;
+            const updated = await pricingService.updatePrices(payload);
             res.json(updated);
         } catch (err) {
             next(err);

@@ -48,10 +48,10 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const benefitDiscount = rawBenefitPercent > 1 ? rawBenefitPercent / 100 : rawBenefitPercent;
 
     // 3. Базове навчання на місяць (15 000)
-    const tuitionPerMonth = prices.tuitionMonthly ?? prices.TUITION_MONTHLY ?? prices.tuitionPerMonth ?? 15000;
+    const tuitionPerMonth = prices.tuitionPerMonth ?? prices.tuitionMonthly ?? prices.TUITION_MONTHLY ?? 15000;
 
     // 4. Харчування на день за віком * 22 робочі дні
-    const mealRates = prices.mealsPerDayByAge ?? prices.MEALS_PER_DAY_BY_AGE ?? prices.mealPerDayByAge ?? {};
+    const mealRates = prices.mealsPerDayByAge ?? prices.mealPerDayByAge ?? prices.MEALS_PER_DAY_BY_AGE ?? {};
     const dailyMealRate = mealRates[numericAge] ?? mealRates[String(numericAge)];
 
     if (!dailyMealRate) {
@@ -64,7 +64,7 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     // 5. Розрахунок періоду та річної знижки (12%)
     const isYear = period === 'year';
     const months = isYear ? 12 : 1;
-    const rawYearlyPercent = prices.annualPaymentPercent ?? prices.ANNUAL_PAYMENT_PERCENT ?? prices.yearlyDiscount ?? 12;
+    const rawYearlyPercent = prices.yearlyDiscountPercent ?? prices.annualPaymentPercent ?? prices.yearlyDiscount ?? prices.ANNUAL_PAYMENT_PERCENT ?? 12;
     const yearlyDiscount = isYear ? (rawYearlyPercent > 1 ? rawYearlyPercent / 100 : rawYearlyPercent) : 0;
 
     // 6. Суми без знижок

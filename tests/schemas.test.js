@@ -124,4 +124,15 @@ test('pricing schemas validation', async (t) => {
         const result = updatePricesSchema.safeParse(negativePrice);
         assert.equal(result.success, false);
     });
+
+    await t.test('getInvoiceValidation: перетворює рядковий id з URL на число (coercion)', () => {
+        const rawRequest = {
+            params: { id: '25' }, // з URL завжди приходить string
+            query: { period: 'month' },
+        };
+        const result = getInvoiceValidation.safeParse(rawRequest);
+        assert.equal(result.success, true);
+        assert.equal(typeof result.data.params.id, 'number');
+        assert.equal(result.data.params.id, 25);
+    });
 });
