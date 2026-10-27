@@ -2,37 +2,26 @@ import { pricingRepository } from './pricing.repository.js';
 import { DEFAULT_PRICES, LIMITS } from '../../config/constants.js';
 import { calcInvoice } from './pricing.calc.js';
 import { childrenService } from '../children/children.service.js';
-import { BadRequestError, ConflictError } from '../../lib/errors.js';
+import { ConflictError } from '../../lib/errors.js';
 
 export const pricingService = {
     // GET /children/:id/invoice
     async getChildInvoice(childId, period = 'month') {
-        // 1. Валідація періоду
-        if (period !== 'month' && period !== 'year') {
-            throw new BadRequestError("Невідомий період. Дозволено лише 'month' або 'year'");
-        }
+        // 1. Отримуємо дитину через childrenService (якщо немає — сервіс викине 404)
+        const child = await childrenService.getById(childId);
 
-        const id = Number(childId);
-        if (!Number.isInteger(id) || id <= 0) {
-            throw new BadRequestError("id має бути додатним цілим числом");
-        }
-
-        // 2. Отримуємо дитину через childrenService (якщо немає — викине 404)
-        const child = await childrenService.getById(id);
-
-        // 3. Перевірка віку (2-5 років за ТЗ)
+        // 2. Бізнес-правило: перевірка віку (2-5 років за ТЗ)
         const age = child.age;
         if (age < (LIMITS?.CHILD_AGE_MIN ?? 2) || age > (LIMITS?.CHILD_AGE_MAX ?? 5)) {
             throw new ConflictError(`Вік дитини (${age}) поза межами садка (дозволено 2-5 років)`);
         }
 
-        // 4. Отримуємо актуальні ціни з БД
+        // 3. Отримуємо актуальні ціни з БД
         const prices = await this.getCurrentPrices();
 
-        // 5. Мапінг пільг (підтримуємо обидва формати: 'max'/'medium'/'min' та 'LEVEL_1'/'LEVEL_2'/'LEVEL_3')
+        // 4. Мапінг пільг (підтримуємо обидва формати: 'max'/'medium'/'min' та 'LEVEL_1'/'LEVEL_2'/'LEVEL_3')
         let rawBenefit = (child.benefitType || 'none').toLowerCase();
 
-        // Словник переведення для calcInvoice
         const benefitMap = {
             none: 'NONE',
             min: 'LEVEL_1',
@@ -45,7 +34,7 @@ export const pricingService = {
 
         const benefitType = benefitMap[rawBenefit] || rawBenefit;
 
-        // 6. Викликаємо чисту функцію розрахунку
+        // 5. Викликаємо чисту функцію розрахунку
         return calcInvoice({ age, benefitType, period }, prices);
     },
 
