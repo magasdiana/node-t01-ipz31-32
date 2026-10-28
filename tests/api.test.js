@@ -1,4 +1,3 @@
-
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import app from "../src/app.js";
@@ -100,39 +99,55 @@ for (const [method, path] of [
   });
 }
 
-// PR #29 — поточна поведінка налаштувань цін
+// PR #29 — валідація налаштувань цін
 
-test("PUT /settings/prices приймає порожній об'єкт", async () => {
+test("PUT /settings/prices відхиляє порожній об'єкт", async () => {
+  await expectStatus(
+    "/settings/prices",
+    {
+      method: "PUT",
+      body: JSON.stringify({}),
+    },
+    400
+  );
+});
+
+test("PUT /settings/prices приймає коректне оновлення", async () => {
   const response = await request("/settings/prices", {
     method: "PUT",
-    body: JSON.stringify({}),
+    body: JSON.stringify({
+      tuitionPerMonth: 15000,
+    }),
   });
 
-  assert.equal(
-    response.status,
-    200,
-    `PUT /settings/prices: отримано HTTP ${response.status}`
+  assert.ok(
+    response.status >= 200 && response.status < 300,
+    `PUT /settings/prices: очікувалася успішна відповідь, отримано HTTP ${response.status}`
   );
+
+  assert.ok(
+    (response.headers.get("content-type") ?? "").includes("application/json"),
+    "Оновлення цін має повертатися у форматі JSON"
+  );
+
+  await response.json();
 });
 
 // PR #31 — генерація чернетки розкладу
 
 test("POST /schedules створює чернетку з порожнім об'єктом", async () => {
-  const response = await request("/schedules", {
-    method: "POST",
-    body: JSON.stringify({}),
-  });
-
-  assert.equal(
-    response.status,
-    201,
-    `POST /schedules: отримано HTTP ${response.status}`
+  await expectStatus(
+    "/schedules",
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+    201
   );
 });
 
 // PR #33 — модуль занять
-// Ці тести фіксують фактичний 404 за адресою /lessons.
-// Вони не підтверджують працездатність модуля занять.
+// Ці тести фіксують недоступність маршруту, а не працездатність модуля.
 
 test("GET /lessons повертає 404 за недоступного маршруту", async () => {
   await expectStatus("/lessons", {}, 404);
