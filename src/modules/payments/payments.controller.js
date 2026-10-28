@@ -1,24 +1,39 @@
-import { paymentsService } from './payments.service.js';
+import { paymentsService } from "./payments.service.js";
 
 export const paymentsController = {
-    // POST /payments
-    async create(req, res, next) {
-        try {
-            const result = await paymentsService.createPayment(req.body);
-            res.status(201).json(result);
-        } catch (err) {
-            next(err);
-        }
-    },
-
-    // GET /payments
-    async list(req, res, next) {
-        try {
-            const childId = req.query.childId;
-            const results = await paymentsService.getPayments(childId);
-            res.json(results);
-        } catch (err) {
-            next(err);
-        }
+  list: async (req, res, next) => {
+    try {
+      const { childId } = req.validated.query;
+      res.json(await paymentsService.getPayments(childId));
+    } catch (err) {
+      next(err);
     }
+  },
+
+  getById: async (req, res, next) => {
+    try {
+      const { id } = req.validated.params;
+      res.json(await paymentsService.getById(id));
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  create: async (req, res, next) => {
+    try {
+      const body = req.validated.body;
+      res.status(201).json(await paymentsService.createPayment(body));
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  delete: async (req, res, next) => {
+    try {
+      const { id } = req.validated.params;
+      res.json(await paymentsService.delete(id));
+    } catch (err) {
+      next(err);
+    }
+  },
 };

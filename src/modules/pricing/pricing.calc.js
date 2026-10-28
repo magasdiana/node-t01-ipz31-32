@@ -36,7 +36,6 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const mappedKey = BENEFIT_MAP[benefitType] || benefitType;
     const benefitDict = prices.benefitPercent || prices.BENEFIT_PERCENT || prices.benefitDiscounts || {};
 
-    // Шукаємо або за LEVEL_3, або за max, або в нижньому регістрі
     const rawBenefitPercent = benefitDict[mappedKey]
         ?? benefitDict[benefitType]
         ?? benefitDict[String(benefitType).toLowerCase()]
@@ -49,10 +48,10 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const benefitDiscount = rawBenefitPercent > 1 ? rawBenefitPercent / 100 : rawBenefitPercent;
 
     // 3. Базове навчання на місяць (15 000)
-    const tuitionPerMonth = prices.tuitionMonthly ?? prices.TUITION_MONTHLY ?? prices.tuitionPerMonth ?? 15000;
+    const tuitionPerMonth = prices.tuitionPerMonth ?? prices.tuitionMonthly ?? prices.TUITION_MONTHLY ?? 15000;
 
     // 4. Харчування на день за віком * 22 робочі дні
-    const mealRates = prices.mealsPerDayByAge ?? prices.MEALS_PER_DAY_BY_AGE ?? prices.mealPerDayByAge ?? {};
+    const mealRates = prices.mealsPerDayByAge ?? prices.mealPerDayByAge ?? prices.MEALS_PER_DAY_BY_AGE ?? {};
     const dailyMealRate = mealRates[numericAge] ?? mealRates[String(numericAge)];
 
     if (!dailyMealRate) {
@@ -65,7 +64,7 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     // 5. Розрахунок періоду та річної знижки (12%)
     const isYear = period === 'year';
     const months = isYear ? 12 : 1;
-    const rawYearlyPercent = prices.annualPaymentPercent ?? prices.ANNUAL_PAYMENT_PERCENT ?? prices.yearlyDiscount ?? 12;
+    const rawYearlyPercent = prices.yearlyDiscountPercent ?? prices.annualPaymentPercent ?? prices.yearlyDiscount ?? prices.ANNUAL_PAYMENT_PERCENT ?? 12;
     const yearlyDiscount = isYear ? (rawYearlyPercent > 1 ? rawYearlyPercent / 100 : rawYearlyPercent) : 0;
 
     // 6. Суми без знижок
@@ -73,10 +72,13 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const mealsAmount = mealsPerMonth * months;
     const subtotal = tuitionAmount + mealsAmount;
 
-    // 7. Множення знижок за ТЗ: (1 - пільга) * (1 - 0.12, якщо рік)
+    // 7. Знижки діють ТІЛЬКИ на навчання (харчування без знижок):
     const discountMultiplier = (1 - benefitDiscount) * (1 - yearlyDiscount);
-    const total = Number((subtotal * discountMultiplier).toFixed(2));
-    const discountAmount = Number((subtotal - total).toFixed(2));
+    const tuitionDiscounted = Number((tuitionAmount * discountMultiplier).toFixed(2));
+    const discountAmount = Number((tuitionAmount - tuitionDiscounted).toFixed(2));
+
+    // Разом: навчання зі знижкою + повна вартість харчування
+    const total = Number((tuitionDiscounted + mealsAmount).toFixed(2));
 
     return {
         period,

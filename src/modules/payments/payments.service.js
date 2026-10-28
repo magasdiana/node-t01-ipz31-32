@@ -1,7 +1,38 @@
 import { paymentsRepository } from './payments.repository.js';
 import { pricingService } from '../pricing/pricing.service.js';
+import { NotFoundError } from '../../lib/errors.js';
 
 export const paymentsService = {
+    // GET /payments?childId=
+    async getPayments(childId) {
+        const where = {};
+        if (childId) {
+            where.childId = Number(childId);
+        }
+
+        const records = await paymentsRepository.findMany(where);
+
+        return records.map((record) => ({
+            id: record.id,
+            childId: record.childId,
+            ...record.data
+        }));
+    },
+
+    // GET /payments/:id
+    async getById(id) {
+        const record = await paymentsRepository.findById(id);
+        if (!record) {
+            throw new NotFoundError('Платіж не знайдено');
+        }
+
+        return {
+            id: record.id,
+            childId: record.childId,
+            ...record.data
+        };
+    },
+
     // POST /payments
     async createPayment({ childId, period = 'month', periodStart, date }) {
         // 1. Дата оплати (ISO)
@@ -12,7 +43,6 @@ export const paymentsService = {
         const resolvedPeriodStart = periodStart || currentYearMonth;
 
         // 3. Сервер САМ рахує чек через getChildInvoice
-        // Якщо дитини немає — сервіс автоматично викине NotFoundError (404)
         const invoice = await pricingService.getChildInvoice(childId, period);
 
         // 4. Формуємо знімок згідно з NFR-04
@@ -34,19 +64,15 @@ export const paymentsService = {
         };
     },
 
-    // GET /payments?childId=
-    async getPayments(childId) {
-        const where = {};
-        if (childId) {
-            where.childId = Number(childId);
+    // DELETE /payments/:id
+    async delete(id) {
+        const existing = await paymentsRepository.findById(id);
+        if (!existing) {
+            throw new NotFoundError('Платіж не знайдено');
         }
 
-        const records = await paymentsRepository.findMany(where);
+        await paymentsRepository.delete(id);
 
-        return records.map((record) => ({
-            id: record.id,
-            childId: record.childId,
-            ...record.data
-        }));
+        return { message: 'Платіж видалено' };
     }
 };

@@ -1,39 +1,29 @@
-import { staffService } from './staff.service.js';
+import { asyncHandler } from "../../lib/asyncHandler.js";
+import { staffService } from "./staff.service.js";
 
 export const staffController = {
-  async getAll(req, res, next) {
-    try {
-      const data = await staffService.getAll();
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  getAll: asyncHandler(async (req, res) => {
+    res.json(await staffService.getAll());
+  }),
 
-  async getById(req, res, next) {
-    try {
-      const data = await staffService.getById(req.params.id);
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  getById: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    res.json(await staffService.getById(id));
+  }),
 
-  async create(req, res, next) {
-    try {
-      const data = await staffService.create(req.body);
-      res.status(201).json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  create: asyncHandler(async (req, res) => {
+    const body = req.validated.body;
+    res.status(201).json(await staffService.create(body));
+  }),
 
-  async update(req, res, next) {
-    try {
-      const data = await staffService.update(req.params.id, req.body);
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  },
+  update: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    const body = req.validated.body;
+    res.json(await staffService.update(id, body));
+  }),
+
+  delete: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    res.json(await staffService.delete(id));
+  }),
 };
