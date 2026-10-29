@@ -116,7 +116,7 @@ test("PUT /settings/prices приймає коректне оновлення", 
   const response = await request("/settings/prices", {
     method: "PUT",
     body: JSON.stringify({
-      tuitionPerMonth: 15000,
+      tuitionMonthly: 15000,
     }),
   });
 

@@ -7,20 +7,20 @@ import { ConflictError } from '../../lib/errors.js';
 export const pricingService = {
     // GET /children/:id/invoice
     async getChildInvoice(childId, period = 'month') {
-        // 1. Отримуємо дитину через childrenService (якщо немає — сервіс викине 404)
+        // 1. Дитина (якщо немає, сервіс викине 404)
         const child = await childrenService.getById(childId);
 
-        // 2. Бізнес-правило: перевірка віку (2-5 років за ТЗ)
+        // 2. Перевірка віку (2-5 років за ТЗ)
         const age = child.age;
         if (age < (LIMITS?.CHILD_AGE_MIN ?? 2) || age > (LIMITS?.CHILD_AGE_MAX ?? 5)) {
             throw new ConflictError(`Вік дитини (${age}) поза межами садка (дозволено 2-5 років)`);
         }
 
-        // 3. Отримуємо актуальні ціни з БД
+        // 3. Актуальні ціни з БД
         const prices = await this.getCurrentPrices();
 
-        // 4. Мапінг пільг (підтримуємо обидва формати: 'max'/'medium'/'min' та 'LEVEL_1'/'LEVEL_2'/'LEVEL_3')
-        let rawBenefit = (child.benefitType || 'none').toLowerCase();
+        // 4. Мапінг пільг ('max'/'medium'/'min' та 'LEVEL_1'/'LEVEL_2'/'LEVEL_3')
+        const rawBenefit = (child.benefitType || 'none').toLowerCase();
 
         const benefitMap = {
             none: 'NONE',
@@ -34,7 +34,7 @@ export const pricingService = {
 
         const benefitType = benefitMap[rawBenefit] || rawBenefit;
 
-        // 5. Викликаємо чисту функцію розрахунку
+        // 5. Чиста функція розрахунку
         return calcInvoice({ age, benefitType, period }, prices);
     },
 
@@ -43,7 +43,14 @@ export const pricingService = {
         if (!settings) {
             settings = await pricingRepository.createSettings(DEFAULT_PRICES);
         }
-        return settings.data;
+        // Доповнюємо дефолтами: рахунок не ламається, якщо в базі немає якогось ключа
+        const data = settings.data || {};
+        return {
+            ...DEFAULT_PRICES,
+            ...data,
+            mealsPerDayByAge: { ...DEFAULT_PRICES.mealsPerDayByAge, ...(data.mealsPerDayByAge || {}) },
+            benefitPercent: { ...DEFAULT_PRICES.benefitPercent, ...(data.benefitPercent || {}) }
+        };
     },
 
     async updatePrices(patchData) {
@@ -52,18 +59,22 @@ export const pricingService = {
             settings = await pricingRepository.createSettings(DEFAULT_PRICES);
         }
 
-        const oldPrices = settings.data;
+        const oldPrices = settings.data || {};
 
+        // Вкладені об'єкти зливаються по ключах, решта полів замінюється
         const newPrices = {
+            ...DEFAULT_PRICES,
             ...oldPrices,
             ...patchData,
             mealsPerDayByAge: {
-                ...(oldPrices.mealsPerDayByAge || oldPrices.mealPerDayByAge),
-                ...(patchData.mealsPerDayByAge || patchData.mealPerDayByAge || {})
+                ...DEFAULT_PRICES.mealsPerDayByAge,
+                ...(oldPrices.mealsPerDayByAge || {}),
+                ...(patchData.mealsPerDayByAge || {})
             },
             benefitPercent: {
-                ...(oldPrices.benefitPercent || oldPrices.benefitDiscounts),
-                ...(patchData.benefitPercent || patchData.benefitDiscounts || {})
+                ...DEFAULT_PRICES.benefitPercent,
+                ...(oldPrices.benefitPercent || {}),
+                ...(patchData.benefitPercent || {})
             }
         };
 
