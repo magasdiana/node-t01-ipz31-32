@@ -1,3 +1,4 @@
+
 import { reportsRepository } from './reports.repository.js';
 import { calcProfit, minRooms, calcGroupBonuses } from './reports.calc.js';
 import { NotFoundError } from '../../lib/errors.js';
@@ -12,7 +13,6 @@ export const reportsService = {
 
     const targetMonth = monthQuery || new Date().toISOString().slice(0, 7);
 
-    // Перетворюємо дату на формат YYYY-MM.
     const getMonth = (date) => {
       if (!date) return null;
 
@@ -23,7 +23,6 @@ export const reportsService = {
       return String(date).slice(0, 7);
     };
 
-    // Перевіряємо, чи входить місяць у 12-місячний період.
     const isMonthInYearlyPeriod = (periodStart, month) => {
       const startMonth = getMonth(periodStart);
 
@@ -74,7 +73,6 @@ export const reportsService = {
       }
     }
 
-    // Рахуємо виручку від навчання без харчування.
     let totalRevenue = 0;
 
     filteredPayments.forEach((p) => {
@@ -94,7 +92,6 @@ export const reportsService = {
         : tuitionRevenue;
     });
 
-    // Правила розрахунку доплат.
     const bonusRules = {
       flatFrom: constants.LIMITS.BONUS_THRESHOLD_CHILDREN,
       flatAmount: 15000,
@@ -117,19 +114,16 @@ export const reportsService = {
       });
     }
 
-    // Зарплати.
     const totalSalaries = filteredStaff.reduce(
       (sum, s) => sum + (Number(s.data?.salary) || 40000),
       0
     );
 
-    // Надбавки.
     const totalAllowances = filteredStaff.reduce(
       (sum, s) => sum + (Number(s.data?.allowance) || 0),
       0
     );
 
-    // Витрати на кімнати.
     const totalRoomsCost = filteredRooms.reduce(
       (sum, r) => sum + (Number(r.data?.cost) || 0),
       0
@@ -166,22 +160,13 @@ export const reportsService = {
     const fixedCosts = 680000;
     const childrenPerRoom = 20;
     const netRevenuePerChild = 91000 / childrenPerRoom;
-    const perRoomCost = 5000;
-
-    const bonusRules = {
-      flatFrom: constants.LIMITS.BONUS_THRESHOLD_CHILDREN,
-      flatAmount: 15000,
-      perChildFrom: constants.LIMITS.BONUS_THRESHOLD_CHILDREN + 1,
-      perChildEducator: constants.SALARY.EDUCATOR_BONUS_PER_EXTRA_CHILD,
-      perChildAssistant: constants.SALARY.ASSISTANT_BONUS_PER_EXTRA_CHILD,
-    };
 
     return minRooms({
       childrenPerRoom,
       netRevenuePerChild,
-      perRoomCost,
+      perRoomCost: 0,
       fixedCosts,
-      bonusRules,
+      bonusRules: null,
     });
   },
 };
