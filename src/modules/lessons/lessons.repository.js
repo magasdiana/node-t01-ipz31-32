@@ -25,6 +25,15 @@ export const lessonsRepository = {
     });
   },
 
+  // Заняття співробітника разом із гуртком. Сортування робить сервіс.
+  findByStaffId(staffId) {
+    return prisma.lesson.findMany({
+      where: { staffId: Number(staffId) },
+      include: { subject: true },
+      orderBy: { id: "asc" },
+    });
+  },
+
   // Одне заняття або null
   findById(id) {
     return prisma.lesson.findUnique({ where: { id } });
