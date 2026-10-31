@@ -45,9 +45,11 @@ export const paymentsService = {
         // 3. Сервер САМ рахує чек через getChildInvoice
         const invoice = await pricingService.getChildInvoice(childId, period);
 
-        // 4. Формуємо знімок згідно з NFR-04
+        // 4. Знімок згідно з NFR-04: items (навчання і харчування) дають звітам
+        // змогу відокремити харчування
         const paymentSnapshot = {
             amount: invoice.total,
+            items: invoice.items,
             discounts: invoice.discounts,
             period,
             periodStart: resolvedPeriodStart,

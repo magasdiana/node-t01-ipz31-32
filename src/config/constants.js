@@ -20,20 +20,13 @@ export const ASSUMPTIONS = {
   A4_LESSON_MINUTES: 30, // тривалість одного уроку
 };
 
-// ---------- Ціни за замовчуванням (розділ 4.6 ТЗ) ----------
-// Це початкові значення для таблиці price_settings. Далі Admin змінює їх через API,
-// а зміни пишуться в price_history.
-export const DEFAULT_PRICES = {
-  TUITION_MONTHLY: 15000, // FR-23, навчання без харчування
-  // FR-25: харчування за день залежно від віку
-  MEALS_PER_DAY_BY_AGE: { 2: 300, 3: 400, 4: 500, 5: 600 },
-  // FR-24: пільги у відсотках (10/20/30). NONE = без пільги
-  BENEFIT_PERCENT: { NONE: 0, LEVEL_1: 10, LEVEL_2: 20, LEVEL_3: 30 },
-  ANNUAL_PAYMENT_PERCENT: 12, // FR-26
-  // Підтверджено замовником: знижки діють лише на навчання, харчування без знижок
-  DISCOUNT_APPLIES_TO: "tuition",
-  // ПРИПУЩЕННЯ: собівартість харчування = ціна харчування * коефіцієнт
-  MEAL_COST_RATIO: 1.0,
+ export const DEFAULT_PRICES = {
+  tuitionMonthly: 15000, // FR-23, навчання без харчування // FR-25: харчування за день залежно від віку
+  mealsPerDayByAge: { 2: 300, 3: 400, 4: 500, 5: 600 }, // FR-24: пільги у відсотках (10/20/30). NONE = без пільги
+  benefitPercent: { NONE: 0, LEVEL_1: 10, LEVEL_2: 20, LEVEL_3: 30 },
+  annualPaymentPercent: 12, // FR-26 // Підтверджено замовником: знижки діють лише на навчання, харчування без знижок
+  discountAppliesTo: "tuition",// ПРИПУЩЕННЯ: собівартість харчування = ціна харчування * коефіцієнт
+  mealCostRatio: 1.0,
 };
 
 // ---------- Вартість кімнат (FR-13) ----------

@@ -122,10 +122,10 @@ test('Dev 3: Тести розрахунку рахунку (FR-23...FR-28)', as
     // --- 6. Перевірка оновлених цін у camelCase (кастомні налаштування) ---
     await t.test('Оновлені ціни (camelCase) коректно змінюють суму рахунку', () => {
         const customPrices = {
-            tuitionPerMonth: 20000,
+            tuitionMonthly: 20000,
             mealsPerDayByAge: { 3: 500 },
             benefitPercent: { NONE: 0 },
-            yearlyDiscountPercent: 15
+            annualPaymentPercent: 15
         };
 
         // За місяць: 20 000 + 500 * 22 = 31 000

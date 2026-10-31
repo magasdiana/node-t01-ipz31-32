@@ -10,18 +10,31 @@ export const getInvoiceValidation = z.object({
     })
 });
 
-// 2. Схема тіла для PUT /settings/prices (з перевіркою на непорожнє тіло)
+const BENEFIT_KEYS = ['NONE', 'LEVEL_1', 'LEVEL_2', 'LEVEL_3'];
+
+// 2. Тіло PUT /settings/prices. Єдині ключі цін; відсотки задаються числом 0-100.
+// strict(): невідомий ключ (наприклад, старий tuitionPerMonth) дає 400, а не мовчазний 200.
 export const updatePricesBodySchema = z.object({
-    tuitionPerMonth: z.number().nonnegative().optional(),
-    mealPerDayByAge: z.record(z.string(), z.number().nonnegative()).optional(),
-    benefitDiscounts: z.record(z.string(), z.number().min(0).max(1)).optional(),
-    yearlyDiscount: z.number().min(0).max(1).optional()
-}).refine(
+    tuitionMonthly: z.number().nonnegative().optional(),
+    mealsPerDayByAge: z
+        .record(z.string(), z.number().nonnegative())
+        .refine((o) => Object.keys(o).every((k) => /^[2-5]$/.test(k)), {
+            message: 'Вік має бути від 2 до 5'
+        })
+        .optional(),
+    benefitPercent: z
+        .record(z.string(), z.number().min(0).max(100))
+        .refine((o) => Object.keys(o).every((k) => BENEFIT_KEYS.includes(k)), {
+            message: 'Невідомий рівень пільги'
+        })
+        .optional(),
+    annualPaymentPercent: z.number().min(0).max(100).optional()
+}).strict().refine(
     (data) => Object.keys(data).length > 0,
     { message: 'Body cannot be empty' }
 );
 
-// 3. Обгортка за узгодженим шаблоном для middleware validate
+// 3. Обгортка за шаблоном для middleware validate
 export const updatePricesSchema = z.object({
     body: updatePricesBodySchema,
     params: z.object({}).optional(),
