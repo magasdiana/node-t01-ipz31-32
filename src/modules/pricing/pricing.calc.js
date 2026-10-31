@@ -18,6 +18,8 @@ const BENEFIT_MAP = {
     LEVEL_3: 'LEVEL_3'
 };
 
+// Ключі цін: tuitionMonthly, mealsPerDayByAge, benefitPercent, annualPaymentPercent.
+// Відсотки зберігаються як 0-100.
 export function calcInvoice({ age, benefitType = 'none', period = 'month' }, prices = DEFAULT_PRICES) {
     const numericAge = Number(age);
 
@@ -32,26 +34,25 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
         throw new Error(`Недопустимий вік дитини: ${age}. Дозволено від ${minAge} до ${maxAge} років.`);
     }
 
-    // 2. Перевірка та визначення відсотка пільги (шукаємо у всіх можливих варіантах ключів)
+    // 2. Відсоток пільги
     const mappedKey = BENEFIT_MAP[benefitType] || benefitType;
-    const benefitDict = prices.benefitPercent || prices.BENEFIT_PERCENT || prices.benefitDiscounts || {};
-
-    const rawBenefitPercent = benefitDict[mappedKey]
-        ?? benefitDict[benefitType]
-        ?? benefitDict[String(benefitType).toLowerCase()]
-        ?? benefitDict[String(mappedKey).toLowerCase()];
+    const benefitDict = prices.benefitPercent ?? {};
+    const rawBenefitPercent = benefitDict[mappedKey];
 
     if (rawBenefitPercent === undefined) {
         throw new Error(`Невідомий тип пільги: ${benefitType}`);
     }
 
-    const benefitDiscount = rawBenefitPercent > 1 ? rawBenefitPercent / 100 : rawBenefitPercent;
+    const benefitDiscount = rawBenefitPercent / 100;
 
-    // 3. Базове навчання на місяць (15 000)
-    const tuitionPerMonth = prices.tuitionPerMonth ?? prices.tuitionMonthly ?? prices.TUITION_MONTHLY ?? 15000;
+    // 3. Базове навчання на місяць
+    const tuitionPerMonth = prices.tuitionMonthly;
+    if (typeof tuitionPerMonth !== 'number') {
+        throw new Error('Не задано ціну навчання (tuitionMonthly)');
+    }
 
     // 4. Харчування на день за віком * 22 робочі дні
-    const mealRates = prices.mealsPerDayByAge ?? prices.mealPerDayByAge ?? prices.MEALS_PER_DAY_BY_AGE ?? {};
+    const mealRates = prices.mealsPerDayByAge ?? {};
     const dailyMealRate = mealRates[numericAge] ?? mealRates[String(numericAge)];
 
     if (!dailyMealRate) {
@@ -61,18 +62,18 @@ export function calcInvoice({ age, benefitType = 'none', period = 'month' }, pri
     const workingDays = ASSUMPTIONS?.A1_WORKING_DAYS_PER_MONTH ?? 22;
     const mealsPerMonth = dailyMealRate * workingDays;
 
-    // 5. Розрахунок періоду та річної знижки (12%)
+    // 5. Період і річна знижка
     const isYear = period === 'year';
     const months = isYear ? 12 : 1;
-    const rawYearlyPercent = prices.yearlyDiscountPercent ?? prices.annualPaymentPercent ?? prices.yearlyDiscount ?? prices.ANNUAL_PAYMENT_PERCENT ?? 12;
-    const yearlyDiscount = isYear ? (rawYearlyPercent > 1 ? rawYearlyPercent / 100 : rawYearlyPercent) : 0;
+    const rawYearlyPercent = prices.annualPaymentPercent ?? 0;
+    const yearlyDiscount = isYear ? rawYearlyPercent / 100 : 0;
 
     // 6. Суми без знижок
     const tuitionAmount = tuitionPerMonth * months;
     const mealsAmount = mealsPerMonth * months;
     const subtotal = tuitionAmount + mealsAmount;
 
-    // 7. Знижки діють ТІЛЬКИ на навчання (харчування без знижок):
+    // 7. Знижки діють ТІЛЬКИ на навчання (харчування без знижок)
     const discountMultiplier = (1 - benefitDiscount) * (1 - yearlyDiscount);
     const tuitionDiscounted = Number((tuitionAmount * discountMultiplier).toFixed(2));
     const discountAmount = Number((tuitionAmount - tuitionDiscounted).toFixed(2));

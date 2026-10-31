@@ -34,3 +34,5 @@ export const getOrDeleteStaffValidation = z.object({
   params: idParam,
   query: z.object({}).optional(),
 });
+
+export const staffScheduleValidation = getOrDeleteStaffValidation;

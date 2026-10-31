@@ -185,21 +185,16 @@ async function main() {
   }
 
   // Початкові ціни (price_settings). Далі зміни пишуться в price_history.
-  await prisma.priceSettings.create({
+    await prisma.priceSettings.create({
     data: {
       data: {
-        tuitionMonthly: DEFAULT_PRICES.TUITION_MONTHLY,
-        mealsPerDayByAge: DEFAULT_PRICES.MEALS_PER_DAY_BY_AGE,
-        benefitPercent: DEFAULT_PRICES.BENEFIT_PERCENT,
-        annualPaymentPercent: DEFAULT_PRICES.ANNUAL_PAYMENT_PERCENT,
-        discountAppliesTo: DEFAULT_PRICES.DISCOUNT_APPLIES_TO,
-        mealCostRatio: DEFAULT_PRICES.MEAL_COST_RATIO,
+        ...DEFAULT_PRICES,
         roomCostDefault: ROOM.ROOM_COST_DEFAULT,
         effectiveFrom: new Date().toISOString().slice(0, 10),
       },
     },
-  });
-
+    });
+  
   console.log("Seed завершено");
 }
 

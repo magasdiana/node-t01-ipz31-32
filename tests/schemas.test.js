@@ -121,7 +121,7 @@ test('pricing schemas validation', async (t) => {
     await t.test('updatePricesSchema: passes with partial valid prices', () => {
         const validData = {
             body: {
-                tuitionPerMonth: 6000,
+                tuitionMonthly: 6000,
             },
         };
 
@@ -141,7 +141,7 @@ test('pricing schemas validation', async (t) => {
     await t.test('updatePricesSchema: fails on negative price', () => {
         const negativePrice = {
             body: {
-                tuitionPerMonth: -100,
+                tuitionMonthly: -100,
             },
         };
 
