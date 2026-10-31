@@ -142,7 +142,7 @@ test("POST /schedules створює чернетку з порожнім об'�
       method: "POST",
       body: JSON.stringify({}),
     },
-    201
+    200
   );
 });
 

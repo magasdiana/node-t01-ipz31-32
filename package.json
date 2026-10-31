@@ -1,12 +1,15 @@
 {
   "name": "node-project",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
     "test": "node --test",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "lint": "eslint src/modules/schedules/schedules.service.js src/modules/schedules/schedules.controller.js src/modules/schedules/schedules.schema.js tests/schedules.service.test.js tests/schedules.api.test.js",
+    "format": "prettier --write src/modules/schedules/schedules.service.js src/modules/schedules/schedules.controller.js src/modules/schedules/schedules.schema.js tests/schedules.service.test.js tests/schedules.api.test.js",
+    "format:check": "prettier --check src/modules/schedules/schedules.service.js src/modules/schedules/schedules.controller.js src/modules/schedules/schedules.schema.js tests/schedules.service.test.js tests/schedules.api.test.js"
   },
   "author": "",
   "license": "ISC",
@@ -24,7 +27,11 @@
     "seed": "node prisma/seed.js"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.13.0",
     "nodemon": "^3.1.14",
+    "prettier": "^3.9.10",
     "prisma": "^6.19.3"
   }
 }
