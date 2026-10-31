@@ -6,9 +6,43 @@ import {
   ConflictError,
 } from '../../lib/errors.js';
 import * as constants from '../../config/constants.js';
+import { lessonsRepository } from '../lessons/lessons.repository.js';
 
 // Базова зарплата за замовчуванням
 const BASE_SALARY = constants.DEFAULT_SALARY || constants.SALARY || 40000;
+
+// Чиста функція: співробітник + рядки занять з БД -> відповідь API (FR-22)
+export function buildStaffSchedule(staff, rows) {
+  const lessons = rows
+    .map((row) => ({
+      id: row.id,
+      groupId: row.groupId,
+      subjectId: row.subjectId,
+      subjectName: row.subject?.data?.name ?? null,
+      day: row.data.day,
+      start: row.data.start,
+      duration: row.data.duration,
+    }))
+    .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start));
+
+  return {
+    staffId: staff.id,
+    fullName: staff.data?.fullName ?? staff.data?.name ?? null,
+    lessons,
+  };
+}
+
+// Фабрика із залежностями, щоб тестувати без БД
+export function createGetStaffSchedule({ staffRepository, lessonsRepository }) {
+  return async function getSchedule(id) {
+    const staff = await staffRepository.findById(id);
+    if (!staff) throw new NotFoundError('Співробітника не знайдено');
+    const rows = await lessonsRepository.findByStaffId(id);
+    return buildStaffSchedule(staff, rows);
+  };
+}
+
+const getStaffSchedule = createGetStaffSchedule({ staffRepository, lessonsRepository });
 
 export const staffService = {
   async getAll() {
@@ -125,5 +159,9 @@ export const staffService = {
     }
 
     return { message: 'Співробітника видалено' };
+  },
+  
+  getSchedule(id) {
+    return getStaffSchedule(id);
   },
 };

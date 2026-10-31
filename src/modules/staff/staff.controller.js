@@ -26,4 +26,9 @@ export const staffController = {
     const { id } = req.validated.params;
     res.json(await staffService.delete(id));
   }),
+
+  getSchedule: asyncHandler(async (req, res) => {
+    const { id } = req.validated.params;
+    res.json(await staffService.getSchedule(id));
+  }),
 };
