@@ -14,10 +14,10 @@ export function calcGroupBonuses(n, rules) {
   return total;
 }
 
-// Прибуток = виручка мінус витрати (кімнати, зарплати, надбавки, харчування)
+// Прибуток = виручка мінус витрати (кімнати, зарплати, надбавки)
 export function calcProfit({ revenue, expenses }) {
   const totalExpenses =
-    expenses.rooms + expenses.salaries + expenses.allowances + expenses.meals;
+    expenses.rooms + expenses.salaries + expenses.allowances;
   return { revenue, expenses, totalExpenses, profit: revenue - totalExpenses };
 }
 
