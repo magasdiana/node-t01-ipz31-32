@@ -21,17 +21,17 @@ export const ASSUMPTIONS = {
 };
 
  export const DEFAULT_PRICES = {
-  tuitionMonthly: 15000, // FR-23, навчання без харчування // FR-25: харчування за день залежно від віку
-  mealsPerDayByAge: { 2: 300, 3: 400, 4: 500, 5: 600 }, // FR-24: пільги у відсотках (10/20/30). NONE = без пільги
-  benefitPercent: { NONE: 0, LEVEL_1: 10, LEVEL_2: 20, LEVEL_3: 30 },
-  annualPaymentPercent: 12, // FR-26 // Підтверджено замовником: знижки діють лише на навчання, харчування без знижок
-  discountAppliesTo: "tuition",// ПРИПУЩЕННЯ: собівартість харчування = ціна харчування * коефіцієнт
-  mealCostRatio: 1.0,
+  tuitionMonthly: 15000, // FR-23, навчання без харчування 
+  mealsPerDayByAge: { 2: 300, 3: 400, 4: 500, 5: 600 }, // FR-25: харчування за день залежно від віку
+  benefitPercent: { NONE: 0, LEVEL_1: 10, LEVEL_2: 20, LEVEL_3: 30 }, // FR-24: пільги у відсотках (10/20/30). NONE = без пільги
+  annualPaymentPercent: 12, // FR-26 
+  discountAppliesTo: "tuition", // Підтверджено замовником: знижки діють лише на навчання, харчування без знижок
+  mealCostRatio: 1.0, // Підтверджено: харчування транзитне (витрати дорівнюють виручці)
 };
 
 // ---------- Вартість кімнат (FR-13) ----------
 export const ROOM = {
-  ROOM_COST_DEFAULT: 50000, // ПРИПУЩЕННЯ: якщо cost не вказано, береться це значення
+  ROOM_COST_DEFAULT: 50000, // Затверджене рішення BA: базова вартість оренди кімнати за замовчуванням
 };
 
 // ---------- Персонал (розділ 4.3 ТЗ) ----------
@@ -59,8 +59,8 @@ export const SCHEDULE = {
   MEALS_PER_DAY: 3, // FR-18
   MEAL_MINUTES: 30, // FR-18
   LESSON_MINUTES: 30, // A4
-  DAYS: ["mon", "tue", "wed", "thu", "fri"], // ПРИПУЩЕННЯ: лише робочі дні
-  DAY_START: "09:00", // ПРИПУЩЕННЯ: початок занять
+  DAYS: ["mon", "tue", "wed", "thu", "fri"], // Затверджене рішення BA: робочі дні тижня (пн–пт)
+  DAY_START: "09:00", // Затверджене рішення BA: час початку роботи / розкладу
   FIXED_BREAKS: [
     { name: "meal_1", start: "09:30", minutes: 30 },
     { name: "meal_2", start: "12:00", minutes: 30 },
@@ -73,5 +73,5 @@ export const SCHEDULE = {
 
 // ---------- Звіти (розділ 4.7 ТЗ) ----------
 export const REPORTS = {
-  MAX_ROOMS_SEARCH: 50, // ПРИПУЩЕННЯ: верхня межа для пошуку мінімальної кількості кімнат
+  MAX_ROOMS_SEARCH: 50, // Затверджене рішення BA: верхня межа для алгоритму пошуку мінімальної кількості кімнат
 };
