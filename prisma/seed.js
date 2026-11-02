@@ -131,8 +131,8 @@ async function main() {
         groupId: group.id,
         data: {
           fullName: `Вихователь групи ${age} років`,
-          position: "caregiver",
-          salary: SALARY.CAREGIVER_BASE,
+          position: "educator",
+          salary: SALARY.EDUCATOR_BASE,
         },
       },
     });
@@ -148,12 +148,12 @@ async function main() {
     });
   }
 
-  // Діти: по 3 в кожній групі, вік відповідає групі
+// Діти: по 3 в кожній групі, вік відповідає групі
   const benefits = [null, "LEVEL_1", "LEVEL_3"];
   for (const group of groups) {
     const age = group.data.age;
     for (let j = 0; j < 3; j++) {
-      await prisma.child.create({
+      const child = await prisma.child.create({
         data: {
           groupId: group.id,
           data: {
@@ -171,13 +171,29 @@ async function main() {
                 relation: "батько",
               },
             ],
-            // FR-03: один родич-депутат для прикладу
             relative:
               j === 0 && age === 2
                 ? { name: "Депутат Тестовий", role: "депутат" }
                 : null,
             benefit: benefits[j],
             preferences: j === 0 ? "не любить гречку" : "",
+          },
+        },
+      });
+
+      // Додаємо запис про оплату для цієї дитини, щоб звіти мали дані
+      await prisma.payment.create({
+        data: {
+          childId: child.id,
+          data: {
+            status: "paid",
+            amount: 21600,
+            period: "month",
+            periodStart: "2026-10",
+            items: [
+              { type: "tuition", amount: 15000 },
+              { type: "meal", amount: 6600 },
+            ],
           },
         },
       });
