@@ -95,7 +95,7 @@ export function createSchedulesService({
     }
   }
 
-  async function generateSchedules({ groupIds } = {}) {
+  async function generateSchedules({ groupIds, save = false } = {}) {
     const allGroups = await groupsService.list();
     const targetGroups = pickGroups(allGroups, groupIds);
 
@@ -117,13 +117,26 @@ export function createSchedulesService({
     const lessons = generated.map((l) => ({ ...l, day: toDayNumber(l.day) }));
     await assertNoClashWithKept(lessons, targetGroups, allGroups);
 
-    // Репозиторій Назара ще не готовий: віддаємо чернетку без запису
-    if (typeof lessonsRepository.replaceForGroups !== "function") {
+    // Якщо save не передано або він false — повертаємо лише чернетку
+    if (!save) {
       return {
         saved: false,
         lessons: [...lessons].sort(sortLessons),
         unscheduled,
       };
+    }
+
+    // Якщо є незаплановані заняття — нічого не зберігаємо
+    if (unscheduled.length > 0) {
+      throw new ConflictError(
+        "Не всі заняття вдалося запланувати. Розклад не збережено.",
+        { unscheduled },
+      );
+    }
+
+    // Для збереження потрібен метод репозиторію
+    if (typeof lessonsRepository.replaceForGroups !== "function") {
+      throw new Error("Репозиторій не підтримує збереження розкладу");
     }
 
     // FK окремо, день і час у JSON
