@@ -1,6 +1,5 @@
 
 import { reportsRepository } from './reports.repository.js';
-import { pricingService } from '../pricing/pricing.service.js';
 import { NotFoundError } from '../../lib/errors.js';
 import {
   DEFAULT_PRICES,
@@ -24,6 +23,8 @@ const BASE_SALARY = {
   teacher: SALARY.TEACHER,
 };
 
+const MIN_ROOMS_FIXED_COSTS = 680000;
+
 function salaryOf(member) {
   const salary = member.data?.salary;
 
@@ -36,11 +37,6 @@ function salaryOf(member) {
 
 const sum = (list, fn) =>
   list.reduce((total, item) => total + fn(item), 0);
-
-const average = (values, fallback) =>
-  values.length > 0
-    ? sum(values, (v) => v) / values.length
-    : fallback;
 
 function currentMonth() {
   return new Date().toISOString().slice(0, 7);
@@ -204,43 +200,17 @@ export const reportsService = {
   },
 
   async getMinRooms() {
-    const [prices, rooms, staff] = await Promise.all([
-      pricingService.getCurrentPrices(),
-      reportsRepository.getRooms(),
-      reportsRepository.getStaffWithSalaries(),
-    ]);
-
-    const netRevenuePerChild = Number(
-      prices.tuitionMonthly ?? DEFAULT_PRICES.tuitionMonthly
-    );
-
     const childrenPerRoom = LIMITS.GROUP_MAX_CHILDREN;
+    const netRevenuePerChild = DEFAULT_PRICES.tuitionMonthly;
 
-    const roomCostPerRoom = average(
-      rooms.map(
-        (r) => Number(r.data?.cost ?? ROOM.ROOM_COST_DEFAULT) || 0
-      ),
-      ROOM.ROOM_COST_DEFAULT
-    );
-
-    const educatorSalary = average(
-      staff
-        .filter((s) => s.data?.position === 'educator')
-        .map(salaryOf),
-      SALARY.EDUCATOR_BASE
-    );
-
-    const assistantSalary = average(
-      staff
-        .filter((s) => s.data?.position === 'assistant')
-        .map(salaryOf),
-      SALARY.ASSISTANT_BASE
-    );
+    const roomCostPerRoom = ROOM.ROOM_COST_DEFAULT;
+    const educatorSalary = SALARY.EDUCATOR_BASE;
+    const assistantSalary = SALARY.ASSISTANT_BASE;
 
     const perRoomCost =
       roomCostPerRoom + educatorSalary + assistantSalary;
 
-    const fixedCosts = sharedCosts(staff).total;
+    const fixedCosts = MIN_ROOMS_FIXED_COSTS;
 
     const result = minRooms({
       childrenPerRoom,

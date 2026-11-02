@@ -1,3 +1,4 @@
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../src/app.js';
@@ -55,7 +56,7 @@ test('GET /reports/profit з неіснуючим groupId повертає 404',
   }
 });
 
-test('GET /reports/min-rooms повертає мінімальну кількість кімнат', async () => {
+test('GET /reports/min-rooms повертає результат за BA-моделлю', async () => {
   const server = app.listen(0);
   await new Promise((resolve) => server.once('listening', resolve));
   const { port } = server.address();
@@ -65,8 +66,18 @@ test('GET /reports/min-rooms повертає мінімальну кількі�
     const data = await res.json();
 
     assert.equal(res.status, 200);
+
     assert.equal(data.rooms, 8);
     assert.equal(data.margin, 91000);
+    assert.equal(data.reason, null);
+
+    assert.equal(data.model.childrenPerRoom, 20);
+    assert.equal(data.model.netRevenuePerChild, 15000);
+    assert.equal(data.model.roomCostPerRoom, 50000);
+    assert.equal(data.model.educatorSalary, 40000);
+    assert.equal(data.model.assistantSalary, 40000);
+    assert.equal(data.model.perRoomCost, 130000);
+    assert.equal(data.model.fixedCosts, 680000);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
