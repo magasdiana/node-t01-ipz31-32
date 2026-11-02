@@ -1,8 +1,13 @@
+
 import { prisma } from '../../lib/prisma.js';
 
 export const reportsRepository = {
   async getPayments() {
-    return await prisma.payment.findMany();
+    return await prisma.payment.findMany({
+      include: {
+        child: true,
+      },
+    });
   },
 
   async getGroupsWithChildrenCount() {

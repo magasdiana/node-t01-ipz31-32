@@ -1,10 +1,11 @@
+
 import { reportsService } from './reports.service.js';
 
 export const reportsController = {
   async getProfit(req, res, next) {
     try {
-      const groupId = req.validated?.query?.groupId ?? req.query.groupId;
-      const result = await reportsService.getProfit(groupId);
+      const query = req.validated?.query ?? req.query;
+      const result = await reportsService.getProfit(query);
       res.json(result);
     } catch (error) {
       next(error);

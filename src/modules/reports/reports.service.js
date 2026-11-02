@@ -1,172 +1,266 @@
 
 import { reportsRepository } from './reports.repository.js';
-import { calcProfit, minRooms, calcGroupBonuses } from './reports.calc.js';
+import { pricingService } from '../pricing/pricing.service.js';
 import { NotFoundError } from '../../lib/errors.js';
-import * as constants from '../../config/constants.js';
+import {
+  DEFAULT_PRICES,
+  GROUP_BONUS_RULES,
+  LIMITS,
+  ROOM,
+  SALARY,
+} from '../../config/constants.js';
+import {
+  calcGroupBonuses,
+  calcProfit,
+  minRooms,
+  paymentShareForMonth,
+  round2,
+} from './reports.calc.js';
+
+const BASE_SALARY = {
+  educator: SALARY.EDUCATOR_BASE,
+  assistant: SALARY.ASSISTANT_BASE,
+  manager: SALARY.MANAGER,
+  teacher: SALARY.TEACHER,
+};
+
+function salaryOf(member) {
+  const salary = member.data?.salary;
+
+  if (salary === undefined || salary === null || salary === '') {
+    return BASE_SALARY[member.data?.position] ?? 0;
+  }
+
+  return Number(salary) || 0;
+}
+
+const sum = (list, fn) =>
+  list.reduce((total, item) => total + fn(item), 0);
+
+const average = (values, fallback) =>
+  values.length > 0
+    ? sum(values, (v) => v) / values.length
+    : fallback;
+
+function currentMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function revenueForMonth(payments, month) {
+  let total = 0;
+  let meals = 0;
+
+  for (const payment of payments) {
+    const share = paymentShareForMonth(payment, month);
+    total += share.total;
+    meals += share.meals;
+  }
+
+  return { total, meals };
+}
+
+function sharedCosts(staff) {
+  const shared = staff.filter((s) => !s.groupId);
+
+  const manager = sum(
+    shared.filter((s) => s.data?.position === 'manager'),
+    salaryOf
+  );
+
+  const teachers = sum(
+    shared.filter((s) => s.data?.position === 'teacher'),
+    salaryOf
+  );
+
+  return {
+    manager,
+    teachers,
+    total: manager + teachers,
+  };
+}
+
+function roundReport(report) {
+  return {
+    ...report,
+    revenue: round2(report.revenue),
+    tuitionRevenue: round2(report.tuitionRevenue),
+    mealsRevenue: round2(report.mealsRevenue),
+    expenses: Object.fromEntries(
+      Object.entries(report.expenses).map(([key, value]) => [
+        key,
+        round2(value),
+      ])
+    ),
+    totalExpenses: round2(report.totalExpenses),
+    profit: round2(report.profit),
+  };
+}
 
 export const reportsService = {
-  async getProfit(groupIdQuery, monthQuery) {
-    const payments = await reportsRepository.getPayments();
-    const groups = await reportsRepository.getGroupsWithChildrenCount();
-    const rooms = await reportsRepository.getRooms();
-    const staff = await reportsRepository.getStaffWithSalaries();
+  async getProfit({ month, groupId } = {}) {
+    const targetMonth = month ?? currentMonth();
 
-    const targetMonth = monthQuery || new Date().toISOString().slice(0, 7);
+    const [payments, allGroups, rooms, staff] = await Promise.all([
+      reportsRepository.getPayments(),
+      reportsRepository.getGroupsWithChildrenCount(),
+      reportsRepository.getRooms(),
+      reportsRepository.getStaffWithSalaries(),
+    ]);
 
-    const getMonth = (date) => {
-      if (!date) return null;
+    let groups = allGroups;
 
-      if (date instanceof Date) {
-        return date.toISOString().slice(0, 7);
-      }
+    if (groupId !== undefined) {
+      const found = allGroups.find((g) => g.id === groupId);
 
-      return String(date).slice(0, 7);
-    };
-
-    const isMonthInYearlyPeriod = (periodStart, month) => {
-      const startMonth = getMonth(periodStart);
-
-      if (!startMonth) return false;
-
-      const [startYear, startMonthNumber] = startMonth.split('-').map(Number);
-      const [targetYear, targetMonthNumber] = month.split('-').map(Number);
-
-      const startIndex = startYear * 12 + startMonthNumber - 1;
-      const targetIndex = targetYear * 12 + targetMonthNumber - 1;
-
-      return targetIndex >= startIndex && targetIndex < startIndex + 12;
-    };
-
-    const monthlyPayments = payments.filter((p) => {
-      const isYearly = p.data?.isYearly || false;
-
-      if (isYearly) {
-        return isMonthInYearlyPeriod(p.data?.periodStart, targetMonth);
-      }
-
-      const paymentDate = p.data?.date || p.createdAt;
-
-      return getMonth(paymentDate) === targetMonth;
-    });
-
-    let filteredPayments = monthlyPayments;
-    let filteredStaff = staff;
-    let filteredRooms = rooms;
-
-    if (groupIdQuery !== undefined) {
-      const group = groups.find((g) => g.id === groupIdQuery);
-
-      if (!group) {
+      if (!found) {
         throw new NotFoundError('Групу не знайдено');
       }
 
-      filteredStaff = staff.filter((s) => s.groupId === groupIdQuery);
+      groups = [found];
+    }
 
-      filteredPayments = monthlyPayments.filter(
-        (p) => p.child?.groupId === groupIdQuery
+    const roomCost = new Map(
+      rooms.map((r) => [
+        r.id,
+        Number(r.data?.cost ?? ROOM.ROOM_COST_DEFAULT) || 0,
+      ])
+    );
+
+    const groupReports = groups.map((group) => {
+      const children = group._count?.children ?? 0;
+
+      const members = staff.filter(
+        (s) =>
+          s.groupId === group.id &&
+          ['educator', 'assistant'].includes(s.data?.position)
       );
 
-      if (group.roomId) {
-        filteredRooms = rooms.filter((r) => r.id === group.roomId);
-      } else {
-        filteredRooms = [];
-      }
-    }
+      const revenue = revenueForMonth(
+        payments.filter((p) => p.child?.groupId === group.id),
+        targetMonth
+      );
 
-    let totalRevenue = 0;
+      const expenses = {
+        rooms: group.roomId ? roomCost.get(group.roomId) ?? 0 : 0,
+        salaries: sum(members, salaryOf),
+        allowances: calcGroupBonuses(children, GROUP_BONUS_RULES),
+        meals: revenue.meals,
+      };
 
-    filteredPayments.forEach((p) => {
-      const amount = Number(p.data?.amount) || 0;
-
-      const mealItem = Array.isArray(p.data?.items)
-        ? p.data.items.find((item) => item.name === 'meals')
-        : null;
-
-      const mealsAmount = Number(mealItem?.amount) || 0;
-
-      const tuitionRevenue = amount - mealsAmount;
-      const isYearly = p.data?.isYearly || false;
-
-      totalRevenue += isYearly
-        ? tuitionRevenue / 12
-        : tuitionRevenue;
-    });
-
-    const bonusRules = {
-      flatFrom: constants.LIMITS.BONUS_THRESHOLD_CHILDREN,
-      flatAmount: 15000,
-      perChildFrom: constants.LIMITS.BONUS_THRESHOLD_CHILDREN + 1,
-      perChildEducator: constants.SALARY.EDUCATOR_BONUS_PER_EXTRA_CHILD,
-      perChildAssistant: constants.SALARY.ASSISTANT_BONUS_PER_EXTRA_CHILD,
-    };
-
-    let totalGroupBonuses = 0;
-
-    if (groupIdQuery !== undefined) {
-      const group = groups.find((g) => g.id === groupIdQuery);
-      const childrenCount = group?._count?.children || 0;
-
-      totalGroupBonuses = calcGroupBonuses(childrenCount, bonusRules);
-    } else {
-      groups.forEach((g) => {
-        const count = g._count?.children || 0;
-        totalGroupBonuses += calcGroupBonuses(count, bonusRules);
+      return roundReport({
+        groupId: group.id,
+        name: group.data?.name ?? null,
+        children,
+        tuitionRevenue: revenue.total - revenue.meals,
+        mealsRevenue: revenue.meals,
+        ...calcProfit({
+          revenue: revenue.total,
+          expenses,
+        }),
       });
-    }
-
-    const totalSalaries = filteredStaff.reduce(
-      (sum, s) => sum + (Number(s.data?.salary) || 40000),
-      0
-    );
-
-    const totalAllowances = filteredStaff.reduce(
-      (sum, s) => sum + (Number(s.data?.allowance) || 0),
-      0
-    );
-
-    const totalRoomsCost = filteredRooms.reduce(
-      (sum, r) => sum + (Number(r.data?.cost) || 0),
-      0
-    );
-
-    const expenses = {
-      rooms: totalRoomsCost,
-      salaries: totalSalaries,
-      allowances: totalAllowances + totalGroupBonuses,
-    };
-
-    const profitData = calcProfit({
-      revenue: totalRevenue,
-      expenses,
     });
 
-    if (groupIdQuery !== undefined) {
-      const group = groups.find((g) => g.id === groupIdQuery);
+    if (groupId !== undefined) {
+      const [only] = groupReports;
 
       return {
-        group,
         month: targetMonth,
-        profitData,
+        shared: null,
+        ...only,
+        groups: groupReports,
       };
     }
 
+    const shared = sharedCosts(staff);
+    const revenue = revenueForMonth(payments, targetMonth);
+
+    const expenses = {
+      rooms: sum(groupReports, (g) => g.expenses.rooms),
+      salaries:
+        sum(groupReports, (g) => g.expenses.salaries) + shared.total,
+      allowances: sum(groupReports, (g) => g.expenses.allowances),
+      meals: revenue.meals,
+    };
+
+    const overall = roundReport({
+      tuitionRevenue: revenue.total - revenue.meals,
+      mealsRevenue: revenue.meals,
+      ...calcProfit({
+        revenue: revenue.total,
+        expenses,
+      }),
+    });
+
     return {
       month: targetMonth,
-      ...profitData,
+      ...overall,
+      shared: {
+        manager: round2(shared.manager),
+        teachers: round2(shared.teachers),
+        total: round2(shared.total),
+      },
+      groups: groupReports,
     };
   },
 
   async getMinRooms() {
-    const fixedCosts = 680000;
-    const childrenPerRoom = 20;
-    const netRevenuePerChild = 91000 / childrenPerRoom;
+    const [prices, rooms, staff] = await Promise.all([
+      pricingService.getCurrentPrices(),
+      reportsRepository.getRooms(),
+      reportsRepository.getStaffWithSalaries(),
+    ]);
 
-    return minRooms({
+    const netRevenuePerChild = Number(
+      prices.tuitionMonthly ?? DEFAULT_PRICES.tuitionMonthly
+    );
+
+    const childrenPerRoom = LIMITS.GROUP_MAX_CHILDREN;
+
+    const roomCostPerRoom = average(
+      rooms.map(
+        (r) => Number(r.data?.cost ?? ROOM.ROOM_COST_DEFAULT) || 0
+      ),
+      ROOM.ROOM_COST_DEFAULT
+    );
+
+    const educatorSalary = average(
+      staff
+        .filter((s) => s.data?.position === 'educator')
+        .map(salaryOf),
+      SALARY.EDUCATOR_BASE
+    );
+
+    const assistantSalary = average(
+      staff
+        .filter((s) => s.data?.position === 'assistant')
+        .map(salaryOf),
+      SALARY.ASSISTANT_BASE
+    );
+
+    const perRoomCost =
+      roomCostPerRoom + educatorSalary + assistantSalary;
+
+    const fixedCosts = sharedCosts(staff).total;
+
+    const result = minRooms({
       childrenPerRoom,
       netRevenuePerChild,
-      perRoomCost: 0,
+      perRoomCost,
       fixedCosts,
-      bonusRules: null,
+      bonusRules: GROUP_BONUS_RULES,
     });
+
+    return {
+      ...result,
+      model: {
+        childrenPerRoom,
+        netRevenuePerChild,
+        perRoomCost,
+        roomCostPerRoom,
+        educatorSalary,
+        assistantSalary,
+        fixedCosts,
+      },
+    };
   },
 };
