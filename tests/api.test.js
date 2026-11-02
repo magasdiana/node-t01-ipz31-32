@@ -133,6 +133,47 @@ test("PUT /settings/prices приймає коректне оновлення", 
   await response.json();
 });
 
+test("PUT /settings/prices відхиляє застарілі ключі", async () => {
+  for (const body of [
+    { tuitionPerMonth: 16000 },
+    { yearlyDiscount: 15 },
+    { mealPerDayByAge: { 3: 450 } },
+  ]) {
+    await expectStatus("/settings/prices", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }, 400);
+  }
+});
+
+test("PUT /settings/prices приймає актуальні camelCase ключі та відсотки 0–100", async () => {
+  const response = await request("/settings/prices", {
+    method: "PUT",
+    body: JSON.stringify({
+      tuitionMonthly: 16000,
+      mealsPerDayByAge: { "3": 450, "4": 500 },
+      benefitPercent: { NONE: 0, LEVEL_1: 10, LEVEL_2: 20, LEVEL_3: 30 },
+      annualPaymentPercent: 15,
+    }),
+  });
+  assert.ok(response.status >= 200 && response.status < 300,
+    `Очікувався 2xx, отримано ${response.status}`);
+});
+
+test("PUT /settings/prices відхиляє відсотки поза 0–100", async () => {
+  for (const body of [
+    { annualPaymentPercent: -1 },
+    { annualPaymentPercent: 101 },
+    { benefitPercent: { LEVEL_1: -1 } },
+    { benefitPercent: { LEVEL_2: 101 } },
+  ]) {
+    await expectStatus("/settings/prices", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }, 400);
+  }
+});
+
 // PR #31 — генерація чернетки розкладу
 
 test("POST /schedules створює чернетку з порожнім об'єктом", async () => {
@@ -146,23 +187,8 @@ test("POST /schedules створює чернетку з порожнім об'�
   );
 });
 
-// PR #33 — модуль занять
-// Ці тести фіксують недоступність маршруту, а не працездатність модуля.
-
-test("GET /lessons повертає 404 за недоступного маршруту", async () => {
-  await expectStatus("/lessons", {}, 404);
-});
-
-test("POST /lessons повертає 404 за недоступного маршруту", async () => {
-  await expectStatus(
-    "/lessons",
-    {
-      method: "POST",
-      body: JSON.stringify({}),
-    },
-    404
-  );
-});
+// Актуальні маршрути занять: GET /groups/:id/lessons та PATCH /lessons/:id.
+// Не тестуємо GET/POST /lessons — таких маршрутів у API немає.
 
 // PR #32 — звіт про прибуток
 

@@ -1,273 +1,190 @@
-# API Bugs and QA Findings
+# API Bugs and QA Findings — Kindergarten API
 
-## Останній запуск автоматизованих тестів
+**Дата актуалізації:** 02.11.2026  
+**Джерело:** `node-t01-ipz31-32.zip`, поточні результати `npm.cmd test` та фактичні відповіді Postman E2E.
 
-**Команда:**
+## 1. Останній повний автоматизований запуск
 
-```bash
-node --test tests/api.test.js
-```
+**Команда:** `npm.cmd test`  
+**Результат:** 113 тестів загалом; 112 PASS; 1 FAIL; приблизно 6,22 секунди.
 
-**Результат останнього запуску:**
+Єдиний відомий failure:
+- файл: `tests/reports.api.test.js`
+- тест: `GET /reports/min-rooms повертає мінімальну кількість кімнат`
+- очікувалося: `data.rooms = 8`
+- фактично: `data.rooms = 7`
+- assertion для `data.margin = 91000` не був виконаний, оскільки тест зупинився на перевірці `rooms`.
 
-- Усього тестів: 21
-- PASS: 21
-- FAIL: 0
-- Загальна тривалість: приблизно 15,3 секунди
+**Важливо:** використання саме тестової БД із `.env` під час останнього запуску окремо не підтверджено. Перед повторним запуском перевірити, що `.env` вказує на тестову, а не production БД.
 
-**Висновок:** усі 21 автоматизований тест завершилися успішно. Водночас частина тестів перевіряє лише HTTP-статус і доступність JSON, а не повну коректність бізнес-логіки.
+Попередній API-only запуск мав 22/22 PASS (приблизно 7,09 секунди); після останніх змін повторний запуск не підтверджено. Старий результат 21/21 із попередньої редакції документації не є останнім повним результатом.
 
 ---
 
-## BUG-001: GET /staff — попередня помилка отримання списку персоналу
+## BUG-001: `GET /staff` — попередня помилка отримання списку персоналу
 
 - **Endpoint:** `GET /staff`
-- **Previous status:** Confirmed
-- **Current status:** Previous error not reproduced; further response validation recommended
-- **Severity:** High
-- **Expected result:** HTTP 200 і список співробітників у форматі JSON.
-- **Previous actual result:** HTTP 500 Internal Server Error.
-- **Previous details:** У `src/modules/staff/staff.service.js` раніше використовувалася назва зв'язку Prisma `staff_subjects`, хоча доступна назва зв'язку — `staffSubjects`.
-- **Latest verification:** Тести отримання списку працівників і перевірки JSON після переходу на `camelCase` пройшли.
-- **Impact:** Раніше список персоналу не завантажувався.
-- **Recommended action:** Перевірити структуру відповіді, назви полів і вміст списку.
-- **Conclusion:** Попередню помилку HTTP 500 не відтворено. Перевірку JSON пройдено, але повну відповідність структури API-контракту ще не підтверджено.
+- **Попередній фактичний результат:** HTTP 500.
+- **Попередня причина:** у `src/modules/staff/staff.service.js` використовувалася назва зв'язку Prisma `staff_subjects` замість `staffSubjects`.
+- **Поточний статус:** попередню помилку не відтворено.
+- **Остання ручна перевірка:** 02.11.2026 `GET /staff` повернув список працівників, зокрема `teacher` ID 128–142 та `educator` ID 151–152.
+- **Severity:** історично High; поточний дефект не підтверджений.
+- **Рекомендація:** залишити як історичну знахідку; не рахувати активним дефектом, якщо повторно не з'явиться HTTP 500 або помилка структури.
+- **Статус:** NOT REPRODUCED / CLOSED FOR NOW.
 
 ---
 
-## BUG-002: GET /reports/profit — попередня помилка endpoint звіту про прибуток
+## BUG-002: `GET /reports/profit` — попередня недоступність endpoint
 
-- **Endpoint:** `GET /reports/profit`
-- **Previous status:** Needs confirmation
-- **Current status:** Previous 404 not reproduced; functional verification pending
-- **Severity:** To be determined
-- **Expected result:** Успішна JSON-відповідь зі звітом про прибуток.
-- **Previous actual result:** HTTP 404 Not Found.
-- **Previous details:** Під час попередньої перевірки маршрут був недоступний.
-- **Latest verification:** Тест отримання успішної відповіді пройшов. Перевірено JSON-відповідь.
-- **Recommended action:** Перевірити структуру звіту, правильність розрахунків і поведінку за відсутності даних.
-- **Conclusion:** Попередній результат 404 не відтворився. Правильність розрахунку прибутку ще потрібно підтвердити тестовими даними.
+- **Endpoint:** `GET /reports/profit?month=YYYY-MM`
+- **Попередній фактичний результат:** HTTP 404.
+- **Поточна перевірка:** `GET /reports/profit?month=2026-11` повернув JSON-звіт за листопад 2026.
+- **Фактичні дані E2E:** revenue 25900; tuitionRevenue 16000; mealsRevenue 9900; totalExpenses 1200000; profit -1174100.
+- **Поточний статус:** попередній 404 не відтворено; endpoint доступний.
+- **Примітка:** доступність маршруту підтверджено, але арифметична узгодженість деталізації витрат має окрему активну знахідку BUG-005.
+- **Статус:** PREVIOUS 404 NOT REPRODUCED; SEE BUG-005.
 
 ---
 
-## BUG-003: GET /reports/min-rooms — попередня помилка endpoint мінімальної кількості кімнат
+## BUG-003: `GET /reports/min-rooms` — неправильне значення мінімальної кількості кімнат
 
 - **Endpoint:** `GET /reports/min-rooms`
-- **Previous status:** Needs confirmation
-- **Current status:** Previous 404 not reproduced; functional verification pending
-- **Severity:** To be determined
-- **Expected result:** Успішна JSON-відповідь із результатом розрахунку мінімальної необхідної кількості кімнат.
-- **Previous actual result:** HTTP 404 Not Found.
-- **Previous details:** Під час попередньої перевірки маршрут був недоступний.
-- **Latest verification:** Тест отримання успішної відповіді пройшов. Перевірено JSON-відповідь.
-- **Recommended action:** Перевірити структуру відповіді та правильність розрахунку на відомому наборі тестових даних.
-- **Conclusion:** Попередній результат 404 не відтворився. Функціональна правильність розрахунку поки не підтверджена.
+- **Severity:** Medium / High (потрібна оцінка впливу на бізнес-рішення).
+- **Очікувано:** `data.rooms = 8`.
+- **Фактично:** `data.rooms = 7`.
+- **Тест:** `tests/reports.api.test.js`, тест `GET /reports/min-rooms повертає мінімальну кількість кімнат`.
+- **Деталі assertion:** спочатку перевіряється HTTP 200, потім `data.rooms === 8`, далі `data.margin === 91000`. Виконання зупинилося на `rooms`, тому фактичне значення `margin` у цьому запуску не встановлено.
+- **Контекст:** окремі unit-тести `minRooms` раніше проходили для контрольних випадків, але інтеграційний endpoint розраховує результат на основі поточних цін, кімнат і зарплат із БД.
+- **Поточний статус:** CONFIRMED FAIL.
+- **Рекомендовані дії:**
+  1. Вивести повну відповідь `GET /reports/min-rooms`, включно з `model`.
+  2. Перевірити фактичні ціни, кімнати, витрати на кімнати, зарплати educator/assistant та shared costs у тестовій БД.
+  3. Зіставити вхідні значення з контрольними даними тесту.
+  4. Не змінювати expected 8 на 7 без підтвердження вимог і причини розбіжності.
+- **Повторна перевірка:** після виправлення повторити точковий тест і повний `npm test`.
 
 ---
 
-## BUG-004: PUT /settings/prices — порожнє тіло запиту
+## BUG-004: `PUT /settings/prices` — порожнє тіло запиту
 
 - **Endpoint:** `PUT /settings/prices`
-- **Previous status:** Needs confirmation
-- **Current status:** Previous test failure resolved; API contract still requires confirmation
-- **Severity:** Medium
-- **Request body:**
-
-```json
-{}
-```
-
-- **Previous expected result:** HTTP 400 Bad Request.
-- **Previous actual result:** HTTP 200 OK.
-- **Latest verification:** Оновлений автоматизований тест підтверджує, що порожній об'єкт відхиляється.
-- **Current actual result:** HTTP 400 Bad Request.
-- **Impact:** Якщо порожнє оновлення не передбачене контрактом API, сервер має відхиляти такий запит. Якщо воно дозволене, поведінку потрібно узгодити з вимогами.
-- **Recommended action:** Зіставити поведінку з вимогами API. Не змінювати бізнес-логіку без підтвердження контракту.
-- **Conclusion:** Поточний тест пройшов, оскільки сервер повернув HTTP 400 для порожнього об'єкта.
+- **Попередній фактичний результат:** HTTP 200 для `{}`.
+- **Очікуваний результат:** HTTP 400 для порожнього об'єкта.
+- **Поточний фактичний результат:** HTTP 400.
+- **Поточний статус:** FIX VERIFIED.
+- **Актуальні ключі API:** `tuitionMonthly`, `mealsPerDayByAge`, `benefitPercent`, `annualPaymentPercent`.
+- **Застарілі ключі:** `tuitionPerMonth`, `yearlyDiscount`, `mealPerDayByAge` — відхиляються за попередньою перевіркою QA.
+- **Валідація:** відсоткові значення мають бути в межах 0–100 (перевірки описані в QA bundle).
+- **Рекомендація:** зберегти регресійний тест для `{}` і перевірки legacy keys. Окремо перевіряти persistence через повторний `GET /settings/prices`.
+- **Статус:** PASS для відхилення `{}`; persistence перевіряти окремо.
 
 ---
 
-## QA finding: POST /schedules — порожнє тіло запиту
+## BUG-005: `GET /reports/profit` — розбіжність між деталізацією витрат і `totalExpenses`
+
+- **Endpoint:** `GET /reports/profit?month=2026-11`
+- **Severity:** Medium (може впливати на фінансову звітність).
+- **Статус:** CONFIRMED QA FINDING за отриманою Postman-відповіддю від 02.11.2026.
+
+### Фактичні дані загального звіту
+
+| Поле | Значення |
+|---|---:|
+| `expenses.rooms` | 200000 |
+| `expenses.salaries` | 1000000 |
+| `expenses.allowances` | 0 |
+| `expenses.meals` | 9900 |
+| Сума компонентів витрат | 1209900 |
+| `totalExpenses` | 1200000 |
+| Різниця | 9900 |
+| `revenue` | 25900 |
+| `profit` | -1174100 |
+
+Арифметична перевірка:
+- Сума компонентів `expenses`: 200000 + 1000000 + 0 + 9900 = **1209900**.
+- API повертає `totalExpenses = 1200000`, тобто на **9900 менше**.
+- `revenue - totalExpenses = 25900 - 1200000 = -1174100`, отже `profit` узгоджується з підсумком `totalExpenses`, але сам підсумок не узгоджується з деталізацією.
+
+### Фактичні дані групи 27 — E2E Test Group
+
+| Поле | Значення |
+|---|---:|
+| `expenses.rooms` | 0 |
+| `expenses.salaries` | 0 |
+| `expenses.allowances` | 0 |
+| `expenses.meals` | 9900 |
+| Сума компонентів витрат | 9900 |
+| `totalExpenses` | 0 |
+| `revenue` | 25900 |
+| `profit` | 25900 |
+
+Для групи 27 `expenses.meals=9900`, але `totalExpenses=0`; значення `profit=25900` відповідає `revenue - totalExpenses`, а не `revenue - сумі деталізованих витрат`.
+
+- **Очікувано:** `totalExpenses` має узгоджуватися з деталізованими компонентами витрат, а `profit` — з доходом мінус витрати, якщо саме така формула передбачена бізнес-контрактом.
+- **Рекомендовані дії:** перевірити формування `totalExpenses` на рівні садка та групи; уточнити, чи `expenses.meals` має входити до підсумку; додати unit/integration assertions на арифметичну узгодженість.
+- **Примітка:** це не спростовує проходження E2E потоку платежу — дохід 25900 для групи 27 відобразився у звіті. Але розрахунок деталізації витрат має окрему невідповідність.
+
+---
+
+## QA finding: `POST /schedules` з порожнім тілом
 
 - **Endpoint:** `POST /schedules`
-- **Current status:** PASS for the current test expectation; validation requirements need confirmation
-- **Request body:**
-
-```json
-{}
-```
-
-- **Latest verification:** Тест створення чернетки розкладу з порожнім об'єктом пройшов.
-- **Actual result:** HTTP 201 Created.
-- **Interpretation:** Поточний тест підтверджує лише те, що фактична відповідь відповідає його очікуваному результату.
-- **Recommended action:** Перевірити контракт генерації розкладу та визначити, чи дозволено створювати чернетку без параметрів. За потреби додати перевірки структури відповіді та вмісту чернетки.
+- **Поточний статус:** REVIEW.
+- **Важливо:** у старому `docs/test-cases.md` було вказано HTTP 201, але архівний `tests/api.test.js` перевіряє HTTP 200. Не переносити старий результат 201 як актуальний факт.
+- **Рекомендація:** повторно виконати запит, зафіксувати фактичний статус і звірити очікування з контрактом генерації чернетки розкладу.
 
 ---
 
-## QA finding: GET /lessons і POST /lessons — маршрути повертають 404
+## Маршрути модуля Lessons
 
-- **Endpoints:** `GET /lessons`, `POST /lessons`
-- **Current status:** Routes unavailable; functional module verification blocked
-- **Latest verification:** Обидва тести отримали HTTP 404, що відповідає поточним очікуванням цих тестів.
-- **Expected result for a functional lessons module:** Якщо модуль має бути реалізований, GET повинен повертати список занять, а POST — створювати заняття з валідними даними.
-- **Impact:** Наразі ці тести не підтверджують працездатність модуля занять.
-- **Recommended action:** Перевірити, чи реалізований і підключений маршрут `/lessons`. Після реалізації додати позитивні тести з валідними даними та негативні тести валідації.
-- **Conclusion:** Тести пройшли як перевірки очікуваного статусу 404. Якщо модуль занять є обов'язковою частиною системи, його функціональність ще не підтверджена.
+Не реєструвати `GET /lessons` і `POST /lessons` як активні дефекти лише через 404: це не підтверджує дефект маршруту, якщо такі endpoints не передбачені контрактом.
 
-**Additional information:** Для модуля занять описані схеми `GET /groups/:id/lessons` і `PATCH /lessons/:id`. Їхню фактичну роботу потрібно перевірити окремо.
+Перевіряти задекларовані маршрути:
+- `GET /groups/:id/lessons`
+- `PATCH /lessons/:id`
+
+Їхня функціональна перевірка залишається **NOT RUN**.
 
 ---
 
-## Manual verification pending
+## Результат Postman E2E — 02.11.2026
 
-Наступні перевірки не входять до підтвердженого результату автоматизованого запуску або не перевіряються ним повністю.
+| Етап | Фактичний результат | Статус |
+|---|---|---|
+| Створення групи | E2E Test Group, ID 27 | PASS |
+| Створення дитини | E2E Test Child, ID 46, HTTP 201 | PASS |
+| Призначення дитини до групи | `groupId=27` | PASS |
+| Отримання рахунку | total 25900 | PASS |
+| Створення платежу | ID 27, childId 46, amount 25900 | PASS |
+| Розклад викладача | staffId 128, два заняття | PASS |
+| Звіт за 2026-11 | дохід групи 27 = 25900 | PASS для проходження потоку |
 
-### 1. POST /staff — створення співробітника
-
-- **Request:** `POST /staff`
-- **Test data:** Валідний об'єкт співробітника відповідно до схеми API.
-- **Expected result:** Успішне створення співробітника.
-- **Record:** Request body, HTTP status, response body, фактичний результат.
-- **Status:** NOT RUN
-
-### 2. POST /subjects — створення предмета
-
-- **Request:** `POST /subjects`
-- **Test data:** Валідний об'єкт предмета відповідно до схеми API.
-- **Expected result:** Успішне створення предмета.
-- **Record:** Request body, HTTP status, response body, фактичний результат.
-- **Status:** NOT RUN
-
-### 3. POST /payments — створення оплати
-
-- **Request:** `POST /payments`
-- **Test data:** Валідні дані оплати та ID наявної дитини.
-- **Expected result:** Успішне створення оплати відповідно до контракту API.
-- **Record:** Request body, HTTP status, response body, фактичний результат.
-- **Status:** NOT RUN
-
-### 4. PUT /settings/prices — оновлення цін
-
-- **Request:** `PUT /settings/prices`
-- **Test data:** Валідні поля налаштувань цін.
-- **Expected result:** Успішне оновлення цін.
-- **Record:** Request body, HTTP status, response body, фактичний результат.
-- **Status:** NOT RUN — persistence verification pending
+**E2E висновок:** основний наскрізний потік пройшов. BUG-005 залишається відкритим, оскільки звіт містить невідповідність у витратах.
 
 ---
 
-## PR #27 — повторна QA-перевірка
+## Інші перевірки, що залишаються NOT RUN
 
-- **Status:** NOT RUN — якщо перевірку PR окремо ще не виконували.
-- **Purpose:** Перевірити вплив змін PR на відповідні маршрути та правила API.
-
-**Checks:**
-
-1. Повторити релевантні запити з валідними даними.
-2. Перевірити порожні тіла запитів для маршрутів з обов'язковими полями.
-3. Перевірити неправильні типи даних, пропущені поля та недопустимі значення.
-4. Перевірити формат помилок, зокрема `error`, `status`, `message` і `details`, якщо ці поля передбачені контрактом.
-5. Повторити відповідні автоматизовані тести.
-
-- **Result:** Заповнити після фактичної перевірки.
-
-## PR #30 — зміни модуля персоналу
-
-- **Status:** Частково перевірено автоматизованими тестами; повна перевірка PR не підтверджена.
-
-**Checks performed:**
-
-1. `GET /staff` повертає успішну відповідь.
-2. `GET /staff` повертає JSON.
-3. Тест успішно прочитав тіло JSON-відповіді.
-
-**Additional checks pending:**
-
-1. Створення співробітника з валідними даними.
-2. Перевірка актуальних назв полів `camelCase`.
-3. Перевірка некоректних даних.
-4. Перевірка структури відповіді за API-контрактом.
-
-**Conclusion:** Автоматизовані перевірки GET пройшли. Це не підтверджує повну коректність усіх змін PR.
-
-## PR #31 — генерація чернетки розкладу
-
-- **Status:** Частково перевірено автоматизованим тестом.
-- **Checks performed:** Надсилання порожнього об'єкта до `POST /schedules`.
-- **Result:** PASS за поточним очікуванням тесту.
-- **Additional checks pending:** Створення чернетки з валідними даними, перевірка структури відповіді та поведінки з некоректними параметрами.
-
-## PR #32 — звіти
-
-- **Status:** Частково перевірено автоматизованими тестами.
-
-**Checks performed:**
-
-1. `GET /reports/profit` повертає успішну відповідь і JSON.
-2. `GET /reports/min-rooms` повертає успішну відповідь і JSON.
-
-- **Additional checks pending:** Перевірка розрахунків на відомих тестових даних і перевірка порожніх даних.
-
-## PR #33 — модуль занять
-
-- **Status:** Маршрути недоступні під час останньої перевірки.
-
-**Checks performed:**
-
-1. `GET /lessons` повертає 404.
-2. `POST /lessons` повертає 404.
-
-**Conclusion:** Тести підтверджують очікуваний статус 404, але не працездатність модуля занять. Якщо маршрути повинні бути реалізовані, потрібно перевірити їх підключення та повторити тести після виправлення.
-
-## PR #35 — генерація розкладу з фіксованими перервами
-
-- **Status:** NOT RUN.
-
-**Planned checks:**
-
-1. Перевірити збереження фіксованих перерв.
-2. Перевірити відсутність накладання занять.
-3. Перевірити ситуацію, коли часу недостатньо для всіх занять.
-4. Переконатися, що результат відповідає правилам генерації.
-
-- **Result:** Заповнити після фактичного виконання тестів.
+- `POST /staff` з валідними даними — повна перевірка створення.
+- `POST /subjects` з валідними даними.
+- `POST /rooms` з валідними даними.
+- `GET /groups/:id/lessons`.
+- `PATCH /lessons/:id` для валідних і невалідних даних.
+- Перевірка збереження цін через повторний GET після PUT.
+- Повна перевірка розкладу з валідними параметрами та відповідності бізнес-правилам.
+- Повторний повний `npm test` після виправлення BUG-003 і BUG-005.
+- Підтвердження, що `.env` використовує саме тестову БД.
 
 ---
 
-## QA status definitions
+## Загальний QA-висновок
 
-- **PASS:** перевірку виконано, фактичний результат відповідає очікуваному.
-- **FAIL:** перевірку виконано, фактичний результат не відповідає очікуваному.
-- **NOT RUN:** перевірку ще не виконано.
-- **BLOCKED:** перевірку неможливо виконати через відсутність реалізації, даних або необхідної залежності.
-- **Needs confirmation:** необхідно уточнити вимоги або підтвердити попередню знахідку.
+**Загальний статус: FAIL / QA NOT READY FOR SIGN-OFF.**
 
----
+Причини:
+1. Повний автоматизований запуск: 112/113 PASS, 1 FAIL (`GET /reports/min-rooms`: 7 замість 8).
+2. Виявлено арифметичну невідповідність у звіті про прибуток (BUG-005).
+3. Частина функціональних сценаріїв, зокрема модуль Lessons, ще не виконана.
+4. Немає окремого підтвердження, що останній повний запуск відбувався на тестовій БД із `.env`.
 
-## Latest automated test summary
-
-| Test                                          | Result                          |
-| --------------------------------------------- | ------------------------------- |
-| `GET /health`                                 | PASS                            |
-| `GET /children`                               | PASS                            |
-| `GET /groups`                                 | PASS                            |
-| `GET /rooms`                                  | PASS                            |
-| `GET /staff`                                  | PASS                            |
-| `GET /subjects`                               | PASS                            |
-| `GET /payments`                               | PASS                            |
-| `GET /settings/prices`                        | PASS                            |
-| `GET /reports/profit`                         | PASS                            |
-| `GET /reports/min-rooms`                      | PASS                            |
-| `POST /staff` with `{}`                       | PASS — invalid request rejected |
-| `POST /subjects` with `{}`                    | PASS — invalid request rejected |
-| `POST /payments` with `{}`                    | PASS — invalid request rejected |
-| `PUT /settings/prices` with `{}`              | PASS — HTTP 400 received        |
-| `PUT /settings/prices` with `tuitionPerMonth` | PASS — successful JSON response |
-| `POST /schedules` with `{}`                   | PASS — HTTP 201 received        |
-| `GET /lessons`                                | PASS — expected 404 received    |
-| `POST /lessons`                               | PASS — expected 404 received    |
-| `GET /reports/profit` returns JSON            | PASS                            |
-| `GET /reports/min-rooms` returns JSON         | PASS                            |
-| `GET /staff` returns JSON                     | PASS                            |
-
-**Overall:** 21/21 automated tests passed. The result confirms that the tested responses match the assertions. It does not by itself prove that all business rules, data structures, and calculations are correct.
+E2E у Postman пройшов, але цього недостатньо для загального PASS. Закривати QA можна після аналізу/виправлення відкритих знахідок, повторного повного запуску на тестовій БД та актуалізації результатів.
