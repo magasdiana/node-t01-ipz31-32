@@ -89,10 +89,18 @@ export const staffService = {
       }
     }
 
+    // Визначаємо зарплату за замовчуванням залежно від посади з констант
+    let defaultSalary = constants.SALARY?.EDUCATOR_BASE || 15000;
+    if (position === 'teacher') {
+      defaultSalary = constants.SALARY?.TEACHER || 20000;
+    } else if (position === 'manager') {
+      defaultSalary = constants.SALARY?.MANAGER || 25000;
+    }
+
     const staffData = {
       name: name.trim(),
       position,
-      salary: salary !== undefined ? salary : BASE_SALARY,
+      salary: salary !== undefined ? salary : defaultSalary,
       allowance: allowance !== undefined ? allowance : 0,
     };
 

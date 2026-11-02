@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { idParam } from '../../lib/schemas.js';
 
-const ALLOWED_POSITIONS = ['teacher', 'caregiver', 'educator', 'assistant', 'admin', 'manager'];
+const ALLOWED_POSITIONS = ['teacher', 'educator', 'assistant', 'admin', 'manager'];
 
 export const createStaffSchema = z.object({
   name: z.string().min(1, 'Ім’я співробітника обов’язкове'),
