@@ -10,6 +10,7 @@ export const generateScheduleSchema = z.object({
         .array(groupId)
         .min(1, "Масив groupIds не може бути порожнім")
         .optional(),
+      save: z.boolean().optional(),
     })
     .default({}),
   params: z.object({}),

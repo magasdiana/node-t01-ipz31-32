@@ -13,11 +13,29 @@ test("порожній groupIds відхиляється", () => {
   assert.equal(parse({ groupIds: [] }).success, false);
 });
 
-test("groupIds з нулем або від’ємним числом відхиляється", () => {
+test("groupIds з нулем або від'ємним числом відхиляється", () => {
   assert.equal(parse({ groupIds: [0] }).success, false);
   assert.equal(parse({ groupIds: [-1] }).success, false);
 });
 
 test("коректний groupIds проходить", () => {
   assert.equal(parse({ groupIds: [1, 2] }).success, true);
+});
+
+test("save: true проходить валідацію", () => {
+  assert.equal(parse({ save: true }).success, true);
+});
+
+test("save: false проходить валідацію", () => {
+  assert.equal(parse({ save: false }).success, true);
+});
+
+test("відсутній save проходить валідацію", () => {
+  assert.equal(parse({ groupIds: [1, 2] }).success, true);
+});
+
+test("save з неправильним типом відхиляється", () => {
+  assert.equal(parse({ save: "true" }).success, false);
+  assert.equal(parse({ save: 1 }).success, false);
+  assert.equal(parse({ save: null }).success, false);
 });
