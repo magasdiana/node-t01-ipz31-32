@@ -1,5 +1,45 @@
+
 // Чисті функції: без бази і без Express. Усі числа приходять параметрами.
 // Харчування в прогнозах не враховуємо: це транзит, виручка дорівнює витратам.
+
+export function round2(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+export function paymentShareForMonth(payment, month) {
+  const data = payment?.data;
+
+  if (!data) return { total: 0, meals: 0 };
+
+  const amount = Number(data.amount) || 0;
+  const mealItem = Array.isArray(data.items)
+    ? data.items.find((item) => item.name === 'meals' || item.type === 'meal')
+    : null;
+  const meals = Number(mealItem?.amount) || 0;
+
+  if (data.period === 'year') {
+    if (!data.periodStart) return { total: 0, meals: 0 };
+
+    const [sy, sm] = String(data.periodStart).slice(0, 7).split('-').map(Number);
+    const [ty, tm] = month.split('-').map(Number);
+    const startIndex = sy * 12 + sm - 1;
+    const targetIndex = ty * 12 + tm - 1;
+
+    if (targetIndex < startIndex || targetIndex >= startIndex + 12) {
+      return { total: 0, meals: 0 };
+    }
+
+    return { total: amount / 12, meals: meals / 12 };
+  }
+
+  const paymentDate = data.date || data.periodStart || payment.createdAt;
+
+  if (!paymentDate || String(paymentDate).slice(0, 7) !== month) {
+    return { total: 0, meals: 0 };
+  }
+
+  return { total: amount, meals };
+}
 
 // Доплата вихователю й помічнику за групу з n дітей.
 // rules: { flatFrom, flatAmount, perChildFrom, perChildEducator, perChildAssistant }
@@ -14,11 +54,19 @@ export function calcGroupBonuses(n, rules) {
   return total;
 }
 
-// Прибуток = виручка мінус витрати (кімнати, зарплати, надбавки, харчування)
+// Прибуток = виручка мінус витрати (кімнати, зарплати, надбавки)
 export function calcProfit({ revenue, expenses }) {
   const totalExpenses =
-    expenses.rooms + expenses.salaries + expenses.allowances + expenses.meals;
-  return { revenue, expenses, totalExpenses, profit: revenue - totalExpenses };
+    expenses.rooms +
+    expenses.salaries +
+    expenses.allowances;
+
+  return {
+    revenue,
+    expenses,
+    totalExpenses,
+    profit: revenue - totalExpenses,
+  };
 }
 
 // Скільки кімнат (груп) потрібно, щоб прибуток груп покрив постійні витрати.

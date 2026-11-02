@@ -1,9 +1,17 @@
+
 import { z } from 'zod';
 
 export const getProfitSchema = z.object({
   body: z.object({}).optional().default({}),
   params: z.object({}).optional().default({}),
   query: z.object({
+    month: z
+      .string()
+      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, {
+        message: 'month повинен мати формат YYYY-MM',
+      })
+      .optional(),
+
     groupId: z
       .string()
       .optional()
