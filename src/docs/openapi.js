@@ -8,6 +8,7 @@ import schedulesDocs from "../modules/schedules/schedules.docs.js";
 import paymentsDocs from "../modules/payments/payments.docs.js";
 import reportsDocs from "../modules/reports/reports.docs.js";
 import pricingDocs from "../modules/pricing/pricing.docs.js";
+import historyDocs from "../modules/history/history.docs.js";
 
 const modules = [
   childrenDocs,
@@ -20,6 +21,7 @@ const modules = [
   reportsDocs,
   roomsDocs,
   pricingDocs,
+  historyDocs,
 ];
 
 // Збираємо шляхи з усіх модулів в одну специфікацію OpenAPI 3
