@@ -7,6 +7,7 @@ import {
 } from '../../lib/errors.js';
 import * as constants from '../../config/constants.js';
 import { lessonsRepository } from '../lessons/lessons.repository.js';
+import { createTeacherLimitChecker } from './staff.limits.js';
 
 // Базова зарплата за замовчуванням
 const BASE_SALARY = constants.DEFAULT_SALARY || constants.SALARY || 40000;
@@ -43,6 +44,7 @@ export function createGetStaffSchedule({ staffRepository, lessonsRepository }) {
 }
 
 const getStaffSchedule = createGetStaffSchedule({ staffRepository, lessonsRepository });
+const assertTeacherLimit = createTeacherLimitChecker({ staffRepository });
 
 export const staffService = {
   async getAll() {
@@ -89,6 +91,9 @@ export const staffService = {
       }
     }
 
+    // FR-15: перевірка до створення, щоб при 409 не лишився співробітник без гуртків
+    await assertTeacherLimit(subjectIds);
+
     // Визначаємо зарплату за замовчуванням залежно від посади з констант
     let defaultSalary = constants.SALARY?.EDUCATOR_BASE || 40000;
     if (position === 'teacher') {
@@ -132,6 +137,14 @@ export const staffService = {
           throw new BadRequestError(`Гурток з ID ${subId} не знайдено`);
         }
       }
+    }
+
+    // FR-15: рахуємо лише гуртки, до яких викладач ще не прив'язаний
+    if (subjectIds !== undefined) {
+      await assertTeacherLimit(subjectIds, {
+        staffId: id,
+        alreadyLinked: (existing.staffSubjects ?? []).map((ss) => ss.subjectId),
+      });
     }
 
     const updatedStaffData = {
