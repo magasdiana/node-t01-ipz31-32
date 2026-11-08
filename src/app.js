@@ -15,6 +15,7 @@ import schedulesRoutes from "./modules/schedules/schedules.routes.js";
 import paymentsRoutes from "./modules/payments/payments.routes.js";
 import reportsRoutes from "./modules/reports/reports.routes.js";
 import pricingRoutes from "./modules/pricing/pricing.routes.js";
+import { requestContextMiddleware } from "./lib/requestContext.js";
 import historyRoutes, {
   childHistoryRoutes,
   groupHistoryRoutes,
@@ -24,6 +25,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(requestContextMiddleware);
 
 // Перевірка стану сервера
 app.get("/health", (req, res) => {
