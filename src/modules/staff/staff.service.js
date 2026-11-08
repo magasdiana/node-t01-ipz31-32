@@ -1,3 +1,4 @@
+
 import { staffRepository } from './staff.repository.js';
 import { subjectsRepository } from '../subjects/subjects.repository.js';
 import {
@@ -7,9 +8,6 @@ import {
 } from '../../lib/errors.js';
 import * as constants from '../../config/constants.js';
 import { lessonsRepository } from '../lessons/lessons.repository.js';
-
-// Базова зарплата за замовчуванням
-const BASE_SALARY = constants.DEFAULT_SALARY || constants.SALARY || 40000;
 
 // Чиста функція: співробітник + рядки занять з БД -> відповідь API (FR-22)
 export function buildStaffSchedule(staff, rows) {
@@ -171,7 +169,7 @@ export const staffService = {
 
     return { message: 'Співробітника видалено' };
   },
-  
+
   getSchedule(id) {
     return getStaffSchedule(id);
   },

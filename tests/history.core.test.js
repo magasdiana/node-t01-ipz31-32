@@ -1,3 +1,4 @@
+
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -45,7 +46,7 @@ test("upsert зі створенням (before null) проходить", () => 
 });
 
 test("запис без changes відхиляється", () => {
-  const { changes, ...bad } = entry;
+  const { changes: _changes, ...bad } = entry;
   assert.equal(historyEntrySchema.safeParse(bad).success, false);
 });
 

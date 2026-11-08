@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 // schema: z.object({ body?, params?, query? })
 // Результат кладе в req.validated. req.body/params/query не змінює,
 // бо в Express 5 req.query є лише для читання.
