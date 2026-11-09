@@ -8,6 +8,8 @@ import {
 } from '../../lib/errors.js';
 import * as constants from '../../config/constants.js';
 import { lessonsRepository } from '../lessons/lessons.repository.js';
+import { createTeacherLimitChecker } from './staff.limits.js';
+import { reportsService } from '../reports/reports.service.js';
 
 // Чиста функція: співробітник + рядки занять з БД -> відповідь API (FR-22)
 export function buildStaffSchedule(staff, rows) {
@@ -41,6 +43,11 @@ export function createGetStaffSchedule({ staffRepository, lessonsRepository }) {
 }
 
 const getStaffSchedule = createGetStaffSchedule({ staffRepository, lessonsRepository });
+// FR-16: прибуток береться зі звіту /reports/profit (весь садок, поточний місяць)
+const assertTeacherLimit = createTeacherLimitChecker({
+  staffRepository,
+  getProfit: async () => (await reportsService.getProfit()).profit,
+});
 
 export const staffService = {
   async getAll() {
@@ -105,6 +112,10 @@ export const staffService = {
       allowance: allowance !== undefined ? allowance : 0,
     };
 
+    // FR-15/16: перевірка до створення, щоб при 409 не лишився співробітник без гуртків.
+    // Новий викладач додає свою зарплату до витрат.
+    await assertTeacherLimit(subjectIds, { extraSalary: staffData.salary });
+
     const created = await staffRepository.create(staffData, finalGroupId);
 
     if (subjectIds && subjectIds.length > 0) {
@@ -130,6 +141,15 @@ export const staffService = {
           throw new BadRequestError(`Гурток з ID ${subId} не знайдено`);
         }
       }
+    }
+
+    // FR-15/16: рахуємо лише гуртки, до яких викладач ще не прив'язаний.
+    // Існуючий співробітник нових витрат не додає: його зарплата вже в прибутку.
+    if (subjectIds !== undefined) {
+      await assertTeacherLimit(subjectIds, {
+        staffId: id,
+        alreadyLinked: (existing.staffSubjects ?? []).map((ss) => ss.subjectId),
+      });
     }
 
     const updatedStaffData = {

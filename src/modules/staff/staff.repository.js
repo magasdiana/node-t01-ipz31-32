@@ -44,6 +44,20 @@ export const staffRepository = {
     );
   },
 
+  // Скільки викладачів уже призначено на кожен із гуртків (FR-15).
+  // excludeStaffId: при оновленні не рахуємо самого викладача.
+  async countTeachersBySubject(subjectIds, excludeStaffId) {
+    const rows = await prisma.staffSubject.groupBy({
+      by: ["subjectId"],
+      where: {
+        subjectId: { in: subjectIds.map(Number) },
+        ...(excludeStaffId !== undefined && { staffId: { not: Number(excludeStaffId) } }),
+      },
+      _count: { _all: true },
+    });
+    return new Map(rows.map((r) => [r.subjectId, r._count._all]));
+  },
+
   async delete(id) {
     return withRequestContext((tx) =>
       tx.staff.delete({
@@ -52,7 +66,8 @@ export const staffRepository = {
     );
   },
 
-  // Видалення старих зв'язків і створення нових в одній транзакції.
+  // Видалення старих зв'язків і створення нових в одній транзакції,
+  // щоб при помилці викладач не лишився без гуртків
   async setStaffSubjects(staffId, subjectIds) {
     const sid = Number(staffId);
     const ids = [...new Set((subjectIds ?? []).map(Number))];
