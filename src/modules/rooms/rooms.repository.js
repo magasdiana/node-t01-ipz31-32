@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { withRequestContext } from "../../lib/requestContextTransaction.js";
 
 const roomInclude = {
   _count: {
@@ -7,6 +8,7 @@ const roomInclude = {
 };
 
 export const roomsRepository = {
+  // Отримати всі кімнати
   list() {
     return prisma.room.findMany({
       include: roomInclude,
@@ -14,6 +16,7 @@ export const roomsRepository = {
     });
   },
 
+  // Отримати кімнату за ID
   getById(id) {
     return prisma.room.findUnique({
       where: { id },
@@ -21,24 +24,33 @@ export const roomsRepository = {
     });
   },
 
+  // Створити кімнату
   create(data) {
-    return prisma.room.create({
-      data,
-      include: roomInclude,
-    });
+    return withRequestContext((tx) =>
+      tx.room.create({
+        data,
+        include: roomInclude,
+      }),
+    );
   },
 
+  // Оновити кімнату
   update(id, data) {
-    return prisma.room.update({
-      where: { id },
-      data,
-      include: roomInclude,
-    });
+    return withRequestContext((tx) =>
+      tx.room.update({
+        where: { id },
+        data,
+        include: roomInclude,
+      }),
+    );
   },
 
+  // Видалити кімнату
   delete(id) {
-    return prisma.room.delete({
-      where: { id },
-    });
+    return withRequestContext((tx) =>
+      tx.room.delete({
+        where: { id },
+      }),
+    );
   },
 };

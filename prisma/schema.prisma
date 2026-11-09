@@ -103,3 +103,9 @@ model PriceHistory {
 
   @@map("price_history")
 }
+model HistoryEntry {
+  id   Int  @id @default(autoincrement())
+  data Json // entity, entityId, action, before, after, changedFields, actor, source, requestId, changedAt
+
+  @@map("history")
+}

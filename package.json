@@ -1,3 +1,4 @@
+
 {
   "name": "node-project",
   "version": "1.0.0",
@@ -7,9 +8,9 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node prisma/seed.js",
-    "lint": "eslint src/modules/schedules/schedules.service.js src/modules/schedules/schedules.controller.js src/modules/schedules/schedules.schema.js tests/schedules.service.test.js tests/schedules.api.test.js",
-    "format": "prettier --write src/modules/schedules/schedules.service.js src/modules/schedules/schedules.controller.js src/modules/schedules/schedules.schema.js tests/schedules.service.test.js tests/schedules.api.test.js",
-    "format:check": "prettier --check src/modules/schedules/schedules.service.js src/modules/schedules/schedules.controller.js src/modules/schedules/schedules.schema.js tests/schedules.service.test.js tests/schedules.api.test.js"
+    "lint": "eslint src tests",
+    "format": "prettier --write src tests",
+    "format:check": "prettier --check src tests"
   },
   "author": "",
   "license": "ISC",

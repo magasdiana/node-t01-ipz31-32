@@ -15,11 +15,17 @@ import schedulesRoutes from "./modules/schedules/schedules.routes.js";
 import paymentsRoutes from "./modules/payments/payments.routes.js";
 import reportsRoutes from "./modules/reports/reports.routes.js";
 import pricingRoutes from "./modules/pricing/pricing.routes.js";
+import { requestContextMiddleware } from "./lib/requestContext.js";
+import historyRoutes, {
+  childHistoryRoutes,
+  groupHistoryRoutes,
+} from "./modules/history/history.routes.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(requestContextMiddleware);
 
 // Перевірка стану сервера
 app.get("/health", (req, res) => {
@@ -34,7 +40,9 @@ app.get("/openapi.json", (req, res) => {
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 // Модулі API. Авторизації поки немає.
+app.use("/children", childHistoryRoutes);
 app.use("/children", childrenRoutes);
+app.use("/groups", groupHistoryRoutes);
 app.use("/groups", groupsRoutes);
 app.use("/rooms", roomsRoutes);
 app.use("/staff", staffRoutes);
@@ -42,6 +50,7 @@ app.use("/subjects", subjectsRoutes);
 app.use("/schedules", schedulesRoutes);
 app.use("/payments", paymentsRoutes);
 app.use("/reports", reportsRoutes);
+app.use("/history", historyRoutes);
 
 // Lessons містять маршрути для різних ресурсів,
 // тому монтуємо їх із кореня.
