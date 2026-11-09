@@ -34,7 +34,7 @@ export default {
         responses: {
           201: { description: 'Співробітника створено', content: jsonObject },
           400: { description: 'Некоректні дані', content: jsonObject },
-          409: { description: 'Перевищено ліміт викладачів на гурток (FR-15)', content: jsonObject },
+          409: { description: 'Перевищено ліміт викладачів на гурток: понад 3 лише за додатного прибутку, максимум 9 (FR-15, FR-16)', content: jsonObject },
         },
       },
     },
@@ -58,7 +58,7 @@ export default {
           200: { description: 'Співробітника оновлено', content: jsonObject },
           400: { description: 'Некоректні дані', content: jsonObject },
           404: { description: 'Співробітника не знайдено', content: jsonObject },
-          409: { description: 'Перевищено ліміт викладачів на гурток (FR-15)', content: jsonObject },
+          409: { description: 'Перевищено ліміт викладачів на гурток: понад 3 лише за додатного прибутку, максимум 9 (FR-15, FR-16)', content: jsonObject },
         },
       },
     },

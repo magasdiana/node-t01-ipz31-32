@@ -8,6 +8,7 @@ import {
 import * as constants from '../../config/constants.js';
 import { lessonsRepository } from '../lessons/lessons.repository.js';
 import { createTeacherLimitChecker } from './staff.limits.js';
+import { reportsService } from '../reports/reports.service.js';
 
 // Базова зарплата за замовчуванням
 const BASE_SALARY = constants.DEFAULT_SALARY || constants.SALARY || 40000;
@@ -44,7 +45,11 @@ export function createGetStaffSchedule({ staffRepository, lessonsRepository }) {
 }
 
 const getStaffSchedule = createGetStaffSchedule({ staffRepository, lessonsRepository });
-const assertTeacherLimit = createTeacherLimitChecker({ staffRepository });
+// FR-16: прибуток береться зі звіту /reports/profit (весь садок, поточний місяць)
+const assertTeacherLimit = createTeacherLimitChecker({
+  staffRepository,
+  getProfit: async () => (await reportsService.getProfit()).profit,
+});
 
 export const staffService = {
   async getAll() {
@@ -91,9 +96,6 @@ export const staffService = {
       }
     }
 
-    // FR-15: перевірка до створення, щоб при 409 не лишився співробітник без гуртків
-    await assertTeacherLimit(subjectIds);
-
     // Визначаємо зарплату за замовчуванням залежно від посади з констант
     let defaultSalary = constants.SALARY?.EDUCATOR_BASE || 40000;
     if (position === 'teacher') {
@@ -111,6 +113,10 @@ export const staffService = {
       salary: salary !== undefined ? salary : defaultSalary,
       allowance: allowance !== undefined ? allowance : 0,
     };
+
+    // FR-15/16: перевірка до створення, щоб при 409 не лишився співробітник без гуртків.
+    // Новий викладач додає свою зарплату до витрат.
+    await assertTeacherLimit(subjectIds, { extraSalary: staffData.salary });
 
     const created = await staffRepository.create(staffData, finalGroupId);
 
@@ -139,7 +145,8 @@ export const staffService = {
       }
     }
 
-    // FR-15: рахуємо лише гуртки, до яких викладач ще не прив'язаний
+    // FR-15/16: рахуємо лише гуртки, до яких викладач ще не прив'язаний.
+    // Існуючий співробітник нових витрат не додає: його зарплата вже в прибутку.
     if (subjectIds !== undefined) {
       await assertTeacherLimit(subjectIds, {
         staffId: id,
