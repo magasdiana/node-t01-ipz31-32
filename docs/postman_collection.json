@@ -11,8 +11,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["health"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
         }
       }
     },
@@ -22,8 +26,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/children",
-          "host": ["{{baseUrl}}"],
-          "path": ["children"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children"
+          ]
         }
       }
     },
@@ -33,8 +41,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/children/{{childId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["children", "{{childId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children",
+            "{{childId}}"
+          ]
         }
       }
     },
@@ -54,8 +67,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/children",
-          "host": ["{{baseUrl}}"],
-          "path": ["children"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children"
+          ]
         }
       }
     },
@@ -75,8 +92,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/children",
-          "host": ["{{baseUrl}}"],
-          "path": ["children"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children"
+          ]
         }
       }
     },
@@ -96,8 +117,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/children",
-          "host": ["{{baseUrl}}"],
-          "path": ["children"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children"
+          ]
         }
       }
     },
@@ -117,8 +142,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/children/{{childId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["children", "{{childId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children",
+            "{{childId}}"
+          ]
         }
       }
     },
@@ -128,8 +158,13 @@
         "method": "DELETE",
         "url": {
           "raw": "{{baseUrl}}/children/{{childId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["children", "{{childId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children",
+            "{{childId}}"
+          ]
         }
       }
     },
@@ -139,8 +174,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/groups",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups"
+          ]
         }
       }
     },
@@ -150,8 +189,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/groups/{{groupId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups", "{{groupId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups",
+            "{{groupId}}"
+          ]
         }
       }
     },
@@ -171,8 +215,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/groups",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups"
+          ]
         }
       }
     },
@@ -192,8 +240,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/groups",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups"
+          ]
         }
       }
     },
@@ -213,8 +265,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/groups",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups"
+          ]
         }
       }
     },
@@ -234,8 +290,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/groups/{{groupId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups", "{{groupId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups",
+            "{{groupId}}"
+          ]
         }
       }
     },
@@ -245,8 +306,13 @@
         "method": "DELETE",
         "url": {
           "raw": "{{baseUrl}}/groups/{{groupId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["groups", "{{groupId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "groups",
+            "{{groupId}}"
+          ]
         }
       }
     },
@@ -256,8 +322,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/rooms",
-          "host": ["{{baseUrl}}"],
-          "path": ["rooms"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "rooms"
+          ]
         }
       }
     },
@@ -267,8 +337,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/rooms/{{roomId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["rooms", "{{roomId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "rooms",
+            "{{roomId}}"
+          ]
         }
       }
     },
@@ -288,8 +363,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/rooms",
-          "host": ["{{baseUrl}}"],
-          "path": ["rooms"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "rooms"
+          ]
         }
       }
     },
@@ -309,8 +388,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/rooms",
-          "host": ["{{baseUrl}}"],
-          "path": ["rooms"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "rooms"
+          ]
         }
       }
     },
@@ -330,8 +413,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/rooms/{{roomId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["rooms", "{{roomId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "rooms",
+            "{{roomId}}"
+          ]
         }
       }
     },
@@ -341,8 +429,13 @@
         "method": "DELETE",
         "url": {
           "raw": "{{baseUrl}}/rooms/{{roomId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["rooms", "{{roomId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "rooms",
+            "{{roomId}}"
+          ]
         }
       }
     },
@@ -352,8 +445,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/staff",
-          "host": ["{{baseUrl}}"],
-          "path": ["staff"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "staff"
+          ]
         }
       }
     },
@@ -363,8 +460,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/staff/{{staffId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["staff", "{{staffId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "staff",
+            "{{staffId}}"
+          ]
         }
       }
     },
@@ -384,8 +486,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/staff",
-          "host": ["{{baseUrl}}"],
-          "path": ["staff"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "staff"
+          ]
         }
       }
     },
@@ -405,8 +511,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/staff",
-          "host": ["{{baseUrl}}"],
-          "path": ["staff"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "staff"
+          ]
         }
       }
     },
@@ -426,8 +536,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/staff/{{staffId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["staff", "{{staffId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "staff",
+            "{{staffId}}"
+          ]
         }
       }
     },
@@ -437,8 +552,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/subjects",
-          "host": ["{{baseUrl}}"],
-          "path": ["subjects"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subjects"
+          ]
         }
       }
     },
@@ -448,8 +567,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/subjects/{{subjectId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["subjects", "{{subjectId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subjects",
+            "{{subjectId}}"
+          ]
         }
       }
     },
@@ -469,8 +593,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/subjects",
-          "host": ["{{baseUrl}}"],
-          "path": ["subjects"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subjects"
+          ]
         }
       }
     },
@@ -490,8 +618,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/subjects",
-          "host": ["{{baseUrl}}"],
-          "path": ["subjects"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subjects"
+          ]
         }
       }
     },
@@ -511,8 +643,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/subjects/{{subjectId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["subjects", "{{subjectId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subjects",
+            "{{subjectId}}"
+          ]
         }
       }
     },
@@ -522,8 +659,14 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/children/{{childId}}/invoice?period=month",
-          "host": ["{{baseUrl}}"],
-          "path": ["children", "{{childId}}", "invoice"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children",
+            "{{childId}}",
+            "invoice"
+          ],
           "query": [
             {
               "key": "period",
@@ -539,8 +682,14 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/children/{{childId}}/invoice?period=year",
-          "host": ["{{baseUrl}}"],
-          "path": ["children", "{{childId}}", "invoice"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "children",
+            "{{childId}}",
+            "invoice"
+          ],
           "query": [
             {
               "key": "period",
@@ -556,8 +705,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/settings/prices",
-          "host": ["{{baseUrl}}"],
-          "path": ["settings", "prices"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "prices"
+          ]
         }
       }
     },
@@ -574,21 +728,26 @@
         "body": {
           "mode": "raw",
           "raw": {
-                  "tuitionMonthly": 15000,
-                  "mealsPerDayByAge": {
-                    "2": 300,
-                    "3": 400,
-                    "4": 500,
-                    "5": 600
-                  },
-                  "benefitPercent": 20,
-                  "annualPaymentPercent": 12
-                }
+            "tuitionMonthly": 15000,
+            "mealsPerDayByAge": {
+              "2": 300,
+              "3": 400,
+              "4": 500,
+              "5": 600
+            },
+            "benefitPercent": 20,
+            "annualPaymentPercent": 12
+          }
         },
         "url": {
           "raw": "{{baseUrl}}/settings/prices",
-          "host": ["{{baseUrl}}"],
-          "path": ["settings", "prices"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "prices"
+          ]
         }
       }
     },
@@ -608,8 +767,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/settings/prices",
-          "host": ["{{baseUrl}}"],
-          "path": ["settings", "prices"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "prices"
+          ]
         }
       }
     },
@@ -629,8 +793,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/settings/prices",
-          "host": ["{{baseUrl}}"],
-          "path": ["settings", "prices"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "prices"
+          ]
         }
       }
     },
@@ -650,8 +819,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/settings/prices",
-          "host": ["{{baseUrl}}"],
-          "path": ["settings", "prices"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "prices"
+          ]
         }
       }
     },
@@ -661,8 +835,14 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/settings/prices/history",
-          "host": ["{{baseUrl}}"],
-          "path": ["settings", "prices", "history"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "prices",
+            "history"
+          ]
         }
       }
     },
@@ -672,8 +852,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/payments",
-          "host": ["{{baseUrl}}"],
-          "path": ["payments"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments"
+          ]
         }
       }
     },
@@ -683,8 +867,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/payments?childId={{childId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["payments"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments"
+          ],
           "query": [
             {
               "key": "childId",
@@ -710,8 +898,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/payments",
-          "host": ["{{baseUrl}}"],
-          "path": ["payments"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments"
+          ]
         }
       }
     },
@@ -731,8 +923,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/payments",
-          "host": ["{{baseUrl}}"],
-          "path": ["payments"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments"
+          ]
         }
       }
     },
@@ -752,8 +948,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/payments",
-          "host": ["{{baseUrl}}"],
-          "path": ["payments"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments"
+          ]
         }
       }
     },
@@ -763,8 +963,12 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/route-that-does-not-exist",
-          "host": ["{{baseUrl}}"],
-          "path": ["route-that-does-not-exist"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "route-that-does-not-exist"
+          ]
         }
       }
     },
@@ -774,8 +978,14 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/staff/{{staffId}}/schedule",
-          "host": ["{{baseUrl}}"],
-          "path": ["staff", "{{staffId}}", "schedule"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "staff",
+            "{{staffId}}",
+            "schedule"
+          ]
         }
       }
     },
@@ -785,8 +995,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/reports/profit?month={{month}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["reports", "profit"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "reports",
+            "profit"
+          ],
           "query": [
             {
               "key": "month",
@@ -802,8 +1017,13 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/reports/profit?month={{month}}&groupId={{groupId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["reports", "profit"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "reports",
+            "profit"
+          ],
           "query": [
             {
               "key": "month",
@@ -818,16 +1038,234 @@
       }
     },
     {
-    "name": "Get Minimum Rooms Report",
-    "request": {
-      "method": "GET",
-      "url": {
-        "raw": "{{baseUrl}}/reports/min-rooms",
-        "host": ["{{baseUrl}}"],
-        "path": ["reports", "min-rooms"]
+      "name": "Get Minimum Rooms Report",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/reports/min-rooms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "reports",
+            "min-rooms"
+          ]
+        }
       }
+    },
+    {
+      "name": "History",
+      "item": [
+        {
+          "name": "1. Create Child (for History)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "const id = json.data ? json.data.id : json.id;",
+                  "pm.collectionVariables.set(\"hist_child_id\", id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Історія Тест Дитина\",\n  \"birthDate\": \"2021-05-10\",\n  \"groupId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/children",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "children"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Update Child (for History)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Історія Оновлена Дитина\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/children/{{hist_child_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "children",
+                "{{hist_child_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Delete Child (for History)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/children/{{hist_child_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "children",
+                "{{hist_child_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Get Child History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json) ? json : (json.data || []);",
+                  "pm.test(\"Contains at least 3 audit entries for child\", function () {",
+                  "    pm.expect(items.length).to.be.at.least(3);",
+                  "});",
+                  "pm.test(\"Audit entries contain before and after states\", function () {",
+                  "    items.forEach(function (entry) {",
+                  "        const d = entry.data || entry;",
+                  "        pm.expect(d).to.have.property(\"action\");",
+                  "        pm.expect(d).to.have.property(\"changes\");",
+                  "        pm.expect(d.changes).to.have.property(\"before\");",
+                  "        pm.expect(d.changes).to.have.property(\"after\");",
+                  "    });",
+                  "});",
+                  "if (items.length > 0) {",
+                  "    const first = items[items.length - 1].data || items[items.length - 1];",
+                  "    pm.collectionVariables.set(\"hist_at_time\", first.createdAt || new Date().toISOString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/history?entity=children&entityId={{hist_child_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "entity",
+                  "value": "children"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{hist_child_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Get Child State at Time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404 (if deleted)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/history/state?entity=children&entityId={{hist_child_id}}&at={{hist_at_time}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "history",
+                "state"
+              ],
+              "query": [
+                {
+                  "key": "entity",
+                  "value": "children"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{hist_child_id}}"
+                },
+                {
+                  "key": "at",
+                  "value": "{{hist_at_time}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
-  }
   ],
   "variable": [
     {
