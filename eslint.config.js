@@ -1,4 +1,5 @@
-﻿import js from "@eslint/js";
+﻿
+import js from "@eslint/js";
 import globals from "globals";
 
 export default [
@@ -10,14 +11,7 @@ export default [
     ],
   },
   {
-    files: [
-      "src/modules/schedules/schedules.service.js",
-      "src/modules/schedules/schedules.controller.js",
-      "src/modules/schedules/schedules.schema.js",
-      "tests/schedules.service.test.js",
-      "tests/schedules.api.test.js",
-      "tests/api.test.js",
-    ],
+    files: ["src/**/*.js", "tests/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

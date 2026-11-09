@@ -2,7 +2,7 @@
 // extra: поля з FK, які треба показати (наприклад, groupId)
 export const toDto = (row, extra = {}) => {
   if (!row) return null;
-  const { id, data, ...rest } = row;
+  const { id, data } = row;
   return { id, ...data, ...extra };
 };
 
