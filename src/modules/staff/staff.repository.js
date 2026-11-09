@@ -58,8 +58,6 @@ export const staffRepository = {
     return new Map(rows.map((r) => [r.subjectId, r._count._all]));
   },
 
-  // Видалення старих зв'язків і створення нових в одній транзакції,
-  // щоб при помилці викладач не лишився без гуртків
   async delete(id) {
     return withRequestContext((tx) =>
       tx.staff.delete({
@@ -68,7 +66,8 @@ export const staffRepository = {
     );
   },
 
-  // Видалення старих зв'язків і створення нових в одній транзакції.
+  // Видалення старих зв'язків і створення нових в одній транзакції,
+  // щоб при помилці викладач не лишився без гуртків
   async setStaffSubjects(staffId, subjectIds) {
     const sid = Number(staffId);
     const ids = [...new Set((subjectIds ?? []).map(Number))];
