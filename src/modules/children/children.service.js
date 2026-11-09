@@ -1,17 +1,15 @@
 import { prisma } from "../../lib/prisma.js";
+import { withRequestContext } from "../../lib/requestContextTransaction.js";
 import { ageInYears } from "../../lib/age.js";
 import { LIMITS } from "../../config/constants.js";
-import {
-  ConflictError,
-  NotFoundError,
-} from "../../lib/errors.js";
+import { ConflictError, NotFoundError } from "../../lib/errors.js";
 
 // Обчислення віку за датою народження
 function getAge(birthDate) {
   return ageInYears(birthDate);
 }
 
-// Бізнес-правило: перевірка допустимого віку дитини (потрібна поточна дата)
+// Перевірка допустимого віку дитини
 function assertChildAge(birthDate) {
   const age = getAge(birthDate);
 
@@ -24,10 +22,9 @@ function assertChildAge(birthDate) {
   return age;
 }
 
-// Перетворення старого формату seed у формат DEV 2
+// Нормалізація старого формату seed
 function normalizeChildData(data) {
-  const relativeVip =
-    data.relativeVip ?? Boolean(data.relative);
+  const relativeVip = data.relativeVip ?? Boolean(data.relative);
 
   let benefitType = data.benefitType;
 
@@ -63,20 +60,15 @@ function childDto(row) {
   };
 }
 
-// Нормалізація groupId для запису в БД
+// Нормалізація groupId
 function normalizeGroupId(value) {
   if (value === undefined) return undefined;
   if (value === null || value === "") return null;
   return Number(value);
 }
 
-// Перевірка відповідності дитини групі та наявності місць (бізнес-правила з БД)
-async function validateGroup(
-  groupId,
-  age,
-  excludeChildId = null,
-  tx = prisma,
-) {
+// Перевірка відповідності дитини групі та наявності місць
+async function validateGroup(groupId, age, excludeChildId = null, tx = prisma) {
   if (groupId === null || groupId === undefined) return;
 
   const group = await tx.group.findUnique({
@@ -88,26 +80,19 @@ async function validateGroup(
   }
 
   if (group.data.age !== age) {
-    throw new ConflictError(
-      "Вік дитини має відповідати віку групи",
-    );
+    throw new ConflictError("Вік дитини має відповідати віку групи");
   }
 
   const childrenCount = await tx.child.count({
     where: {
       groupId,
-      ...(excludeChildId !== null
-        ? { id: { not: excludeChildId } }
-        : {}),
+      ...(excludeChildId !== null ? { id: { not: excludeChildId } } : {}),
     },
   });
 
   const limit = group.data.limit ?? LIMITS.GROUP_MAX_CHILDREN;
 
-  if (
-    childrenCount >= limit ||
-    childrenCount >= LIMITS.GROUP_MAX_CHILDREN
-  ) {
+  if (childrenCount >= limit || childrenCount >= LIMITS.GROUP_MAX_CHILDREN) {
     throw new ConflictError("У групі немає вільних місць");
   }
 }
@@ -140,14 +125,11 @@ export const childrenService = {
     const age = assertChildAge(input.birthDate);
     const guardians = input.guardians ?? [];
     const relativeVip = input.relativeVip ?? false;
-    const benefitType =
-      input.benefitType ?? (relativeVip ? "max" : "none");
+    const benefitType = input.benefitType ?? (relativeVip ? "max" : "none");
 
     const groupId = normalizeGroupId(
       input.groupId !== undefined ? input.groupId : input.group_id,
     );
-
-    await validateGroup(groupId, age);
 
     const data = {
       name: input.name.trim(),
@@ -158,11 +140,15 @@ export const childrenService = {
       benefitType,
     };
 
-    const row = await prisma.child.create({
-      data: {
-        data,
-        groupId,
-      },
+    const row = await withRequestContext(async (tx) => {
+      await validateGroup(groupId, age, null, tx);
+
+      return tx.child.create({
+        data: {
+          data,
+          groupId,
+        },
+      });
     });
 
     return childDto(row);
@@ -170,87 +156,76 @@ export const childrenService = {
 
   // Оновити дитину
   async update(id, input) {
-    const existing = await prisma.child.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("Дитину не знайдено");
-    }
-
-    const nextData = normalizeChildData(existing.data);
-
-    for (const key of [
-      "name",
-      "birthDate",
-      "guardians",
-      "relativeVip",
-      "preferences",
-      "benefitType",
-    ]) {
-      if (input[key] !== undefined) {
-        nextData[key] = input[key];
-      }
-    }
-
-    if (nextData.name) {
-      nextData.name = nextData.name.trim();
-    }
-
-    const age = assertChildAge(nextData.birthDate);
-
-    // Якщо родич є, а тип пільги явно не передано,
-    // встановлюємо max. Якщо родича прибрали — none.
-    if (input.benefitType === undefined) {
-      if (
-        nextData.relativeVip &&
-        !existing.data.relativeVip
-      ) {
-        nextData.benefitType = "max";
-      } else if (
-        !nextData.relativeVip &&
-        existing.data.relativeVip
-      ) {
-        nextData.benefitType = "none";
-      }
-    }
-
-    const hasGroupId =
-      input.groupId !== undefined ||
-      input.group_id !== undefined;
-
-    const groupId = hasGroupId
-      ? normalizeGroupId(
-        input.groupId !== undefined
-          ? input.groupId
-          : input.group_id,
-      )
-      : existing.groupId;
-
-    if (groupId !== existing.groupId) {
-      await validateGroup(groupId, age, id);
-    } else if (groupId !== null && groupId !== undefined) {
-      const group = await prisma.group.findUnique({
-        where: { id: groupId },
+    const row = await withRequestContext(async (tx) => {
+      const existing = await tx.child.findUnique({
+        where: { id },
       });
 
-      if (!group) {
-        throw new NotFoundError("Групу не знайдено");
+      if (!existing) {
+        throw new NotFoundError("Дитину не знайдено");
       }
 
-      if (group.data.age !== age) {
-        throw new ConflictError(
-          "Вік дитини має відповідати віку групи",
-        );
-      }
-    }
+      const nextData = normalizeChildData(existing.data);
 
-    const row = await prisma.child.update({
-      where: { id },
-      data: {
-        data: nextData,
-        groupId,
-      },
+      for (const key of [
+        "name",
+        "birthDate",
+        "guardians",
+        "relativeVip",
+        "preferences",
+        "benefitType",
+      ]) {
+        if (input[key] !== undefined) {
+          nextData[key] = input[key];
+        }
+      }
+
+      if (nextData.name) {
+        nextData.name = nextData.name.trim();
+      }
+
+      const age = assertChildAge(nextData.birthDate);
+
+      if (input.benefitType === undefined) {
+        if (nextData.relativeVip && !existing.data.relativeVip) {
+          nextData.benefitType = "max";
+        } else if (!nextData.relativeVip && existing.data.relativeVip) {
+          nextData.benefitType = "none";
+        }
+      }
+
+      const hasGroupId =
+        input.groupId !== undefined || input.group_id !== undefined;
+
+      const groupId = hasGroupId
+        ? normalizeGroupId(
+            input.groupId !== undefined ? input.groupId : input.group_id,
+          )
+        : existing.groupId;
+
+      if (groupId !== existing.groupId) {
+        await validateGroup(groupId, age, id, tx);
+      } else if (groupId !== null && groupId !== undefined) {
+        const group = await tx.group.findUnique({
+          where: { id: groupId },
+        });
+
+        if (!group) {
+          throw new NotFoundError("Групу не знайдено");
+        }
+
+        if (group.data.age !== age) {
+          throw new ConflictError("Вік дитини має відповідати віку групи");
+        }
+      }
+
+      return tx.child.update({
+        where: { id },
+        data: {
+          data: nextData,
+          groupId,
+        },
+      });
     });
 
     return childDto(row);
@@ -258,17 +233,19 @@ export const childrenService = {
 
   // Видалити дитину
   async remove(id) {
-    const existing = await prisma.child.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("Дитину не знайдено");
-    }
-
     try {
-      await prisma.child.delete({
-        where: { id },
+      await withRequestContext(async (tx) => {
+        const existing = await tx.child.findUnique({
+          where: { id },
+        });
+
+        if (!existing) {
+          throw new NotFoundError("Дитину не знайдено");
+        }
+
+        await tx.child.delete({
+          where: { id },
+        });
       });
     } catch (error) {
       if (error.code === "P2003") {

@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { withRequestContext } from "../../lib/requestContextTransaction.js";
 
 export const staffRepository = {
   async findAll() {
@@ -16,44 +17,59 @@ export const staffRepository = {
   },
 
   async create(data, groupId) {
-    return prisma.staff.create({
-      data: {
-        data,
-        groupId: groupId ? Number(groupId) : null,
-      },
-    });
+    return withRequestContext((tx) =>
+      tx.staff.create({
+        data: {
+          data,
+          groupId: groupId ? Number(groupId) : null,
+        },
+      }),
+    );
   },
 
   async update(id, data, groupId) {
-    return prisma.staff.update({
-      where: { id: Number(id) },
-      data: {
-        data,
-        groupId:
-          groupId !== undefined
-            ? groupId
-              ? Number(groupId)
-              : null
-            : undefined,
-      },
-    });
+    return withRequestContext((tx) =>
+      tx.staff.update({
+        where: { id: Number(id) },
+        data: {
+          data,
+          groupId:
+            groupId !== undefined
+              ? groupId
+                ? Number(groupId)
+                : null
+              : undefined,
+        },
+      }),
+    );
   },
 
-  // Видалення старих зв'язків і створення нових в одній транзакції,
-  // щоб при помилці викладач не лишився без гуртків
+  async delete(id) {
+    return withRequestContext((tx) =>
+      tx.staff.delete({
+        where: { id: Number(id) },
+      }),
+    );
+  },
+
+  // Видалення старих зв'язків і створення нових в одній транзакції.
   async setStaffSubjects(staffId, subjectIds) {
     const sid = Number(staffId);
     const ids = [...new Set((subjectIds ?? []).map(Number))];
 
-    await prisma.$transaction([
-      prisma.staffSubject.deleteMany({ where: { staffId: sid } }),
-      ...(ids.length > 0
-        ? [
-            prisma.staffSubject.createMany({
-              data: ids.map((subjectId) => ({ staffId: sid, subjectId })),
-            }),
-          ]
-        : []),
-    ]);
+    return withRequestContext(async (tx) => {
+      await tx.staffSubject.deleteMany({
+        where: { staffId: sid },
+      });
+
+      if (ids.length > 0) {
+        await tx.staffSubject.createMany({
+          data: ids.map((subjectId) => ({
+            staffId: sid,
+            subjectId,
+          })),
+        });
+      }
+    });
   },
 };
