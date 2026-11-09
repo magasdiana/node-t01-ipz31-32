@@ -29,4 +29,24 @@ export function createHistoryController(service) {
   };
 }
 
+export async function getStateAt(req, res, next) {
+  try {
+    const { entity, entityId, at } = req.query;
+
+    if (!entity || !entityId || !at) {
+      return res.status(400).json({ error: 'Missing required query parameters: entity, entityId, at' });
+    }
+
+    const state = await historyService.getStateAt(entity, Number(entityId), at);
+
+    if (!state) {
+      return res.status(404).json({ error: 'Entity state not found for the specified time' });
+    }
+
+    return res.json({ state });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export const historyController = createHistoryController(historyService);

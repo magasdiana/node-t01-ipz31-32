@@ -1,3 +1,4 @@
+import { stateAt } from './history.state.js';
 import { toDto } from "../../lib/dto.js";
 import { NotFoundError } from "../../lib/errors.js";
 
@@ -41,6 +42,23 @@ export function createHistoryService({ historyRepository, entityChecks = {} }) {
         throw new Error(`Не налаштовано перевірку для сутності ${entityKey}`);
       await check(entityId); // кидає 404, якщо запису немає
       return list({ ...filters, entity: entityKey, entityId });
+    },
+
+    async getStateAt(entityKey, entityId, at) {
+      const check = entityChecks[entityKey];
+      if (!check) {
+        throw new Error(`Не налаштовано перевірку для сутності ${entityKey}`);
+      }
+      await check(entityId); // перевіряє, чи існує сутність (кидає 404, якщо ні)
+
+      // Отримуємо всі записи історії для цієї сутності
+      const { items } = await historyRepository.findMany({ 
+        entity: entityKey, 
+        entityId: Number(entityId) 
+      });
+
+      // Проганяємо через твою функцію stateAt
+      return stateAt(items, at);
     },
   };
 }
