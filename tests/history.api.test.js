@@ -14,7 +14,14 @@ import { NotFoundError } from "../src/lib/errors.js";
 
 const entry = (id, entity, entityId, action, createdAt) => ({
   id,
-  data: { entity, entityId, action, createdAt, changes: {} },
+  data: {
+    entity,
+    entityId,
+    action,
+    createdAt,
+    changes: {},
+    after: { id: entityId, name: "Test" },
+  },
 });
 
 const fixtures = [
@@ -26,27 +33,43 @@ const fixtures = [
 ];
 
 // Те саме, що робить справжній репозиторій, але над масивом
+
 const fakeRepository = {
-  async findMany({ entity, entityId, action, from, to, limit, offset }) {
-    const rows = fixtures
+  async findMany({ entity, entityId, action, from, to, limit, offset, sort }) {
+    let rows = fixtures
       .filter((r) => entity === undefined || r.data.entity === entity)
       .filter((r) => entityId === undefined || r.data.entityId === entityId)
       .filter((r) => action === undefined || r.data.action === action)
       .filter((r) => !from || r.data.createdAt >= `${from}T00:00:00.000Z`)
       .filter((r) => !to || r.data.createdAt <= `${to}T23:59:59.999Z`)
-      .sort((a, b) => b.id - a.id);
-    return { items: rows.slice(offset, offset + limit), total: rows.length };
+      .sort((a, b) => sort === "asc" ? a.id - b.id : b.id - a.id);
+
+    const total = rows.length;
+
+    if (offset !== undefined || limit !== undefined) {
+      const start = offset ?? 0;
+      rows = rows.slice(
+        start,
+        limit === undefined ? undefined : start + limit
+      );
+    }
+
+    return { items: rows, total };
   },
+
   async findById(id) {
     return fixtures.find((r) => r.id === id) ?? null;
   },
+
   async count() {
     return fixtures.length;
   },
+
   async findLast() {
     return [...fixtures].sort((a, b) => b.id - a.id)[0] ?? null;
   },
 };
+
 
 const exists = (kind, ids) => async (id) => {
   if (!ids.includes(id)) throw new NotFoundError(`${kind} не знайдено`);
@@ -153,11 +176,27 @@ test("невалідний фільтр дає 400 в єдиному форма�
   }
 });
 
-test("/history/state не сприймається як :id", async () => {
-  const { status, body } = await call("/history/state");
+test("GET /history/state: успішне відновлення стану сутності на заданий момент часу", async () => {
+  // На 2026-10-02 дитина з id 1 вже створена (1 жовтня) і оновлена (5 жовтня ще не настало)
+  const { status, body } = await call("/history/state?entity=child&entityId=1&at=2026-10-02T00:00:00.000Z");
   assert.equal(status, 200);
-  assert.equal(body.total, 5);
-  assert.equal(body.last.id, 5);
+  assert.deepEqual(body.state, { id: 1, name: "Test" });
+});
+
+
+test("GET /history/state: повертає 404, якщо сутність уже була видалена", async () => {
+  // Дитину з id 1 видалено 20 жовтня, тому 21 жовтня її стану вже немає
+  const { status } = await call(
+    "/history/state?entity=child&entityId=1&at=2026-10-21T00:00:00.000Z"
+  );
+
+  assert.equal(status, 404);
+});
+
+
+test("GET /history/state: повертає 400 при відсутності обов'язкових параметрів", async () => {
+  const { status } = await call("/history/state?entity=child");
+  assert.equal(status, 400);
 });
 
 test("GET /history/:id: знайдено, не знайдено, некоректний id", async () => {
@@ -201,6 +240,17 @@ test("GET /groups/:id/history: історія групи і 404", async () => {
   );
   assert.equal((await call("/groups/999/history")).status, 404);
 });
+
+
+test("GET /history/state: повертає 404, якщо сутність ще не існувала", async () => {
+  // Дитину з id 1 створено 1 жовтня, тому 30 вересня її ще не існувало
+  const { status } = await call(
+    "/history/state?entity=child&entityId=1&at=2026-09-30T00:00:00.000Z"
+  );
+
+  assert.equal(status, 404);
+});
+
 
 test("історія тільки для читання: POST, PATCH, DELETE дають 404", async () => {
   for (const method of ["POST", "PATCH", "DELETE"]) {

@@ -6,15 +6,19 @@ import {
   historyStateSchema,
   entityHistorySchema,
 } from "./history.schema.js";
-import { historyController } from "./history.controller.js";
+import { historyController, getStateAt } from "./history.controller.js";
 
-export function createHistoryRouter(controller) {
+export function createHistoryRouter(customController) {
   const router = Router();
 
-  router.get("/", validate(listHistorySchema), controller.list);
+  // Використовуємо переданий контролер або дефолтний, а для stateAt гарантовано беремо функцію
+  const ctrl = customController || historyController;
+  const stateHandler = ctrl.getStateAt || getStateAt;
+
+  router.get("/", validate(listHistorySchema), ctrl.list);
   // /state ОБОВ'ЯЗКОВО перед /:id, інакше "state" піде в параметр id
-  router.get("/state", validate(historyStateSchema), controller.getState);
-  router.get("/:id", validate(historyIdSchema), controller.getById);
+  router.get("/state", validate(historyStateSchema), stateHandler);
+  router.get("/:id", validate(historyIdSchema), ctrl.getById);
 
   return router;
 }
@@ -22,10 +26,11 @@ export function createHistoryRouter(controller) {
 // Для монтування під /children і /groups: GET /:id/history
 export function createEntityHistoryRouter(controller, entityKey) {
   const router = Router();
+  const ctrl = controller || historyController;
   router.get(
     "/:id/history",
     validate(entityHistorySchema),
-    controller.forEntity(entityKey),
+    ctrl.forEntity(entityKey),
   );
   return router;
 }

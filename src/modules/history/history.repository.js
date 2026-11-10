@@ -16,19 +16,25 @@ function buildWhere({ entity, entityId, action, from, to }) {
 }
 
 export const historyRepository = {
-  async findMany(filters) {
-    const where = buildWhere(filters);
-    const [items, total] = await Promise.all([
-      prisma.historyEntry.findMany({
-        where,
-        orderBy: { id: "desc" },
-        skip: filters.offset,
-        take: filters.limit,
-      }),
-      prisma.historyEntry.count({ where }),
-    ]);
-    return { items, total };
-  },
+  
+async findMany(filters = {}) {
+  const where = buildWhere(filters);
+
+  const [items, total] = await Promise.all([
+    prisma.historyEntry.findMany({
+      where,
+      orderBy: {
+        id: filters.sort === "asc" ? "asc" : "desc",
+      },
+      ...(filters.offset !== undefined ? { skip: filters.offset } : {}),
+      ...(filters.limit !== undefined ? { take: filters.limit } : {}),
+    }),
+    prisma.historyEntry.count({ where }),
+  ]);
+
+  return { items, total };
+},
+
 
   findById(id) {
     return prisma.historyEntry.findUnique({ where: { id } });
