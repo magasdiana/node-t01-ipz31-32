@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { idParam, isoDate } from "../../lib/schemas.js";
+import { idParam, isoDate, isoDateTime } from "../../lib/schemas.js";
 
 export const HISTORY_ACTIONS = ["create", "update", "upsert", "delete"];
 
@@ -42,7 +42,11 @@ export const historyIdSchema = z.object({
 export const historyStateSchema = z.object({
   body: z.any(),
   params: z.object({}),
-  query: z.object({}),
+  query: z.object({
+    entity: z.enum(["child", "group"]),
+    entityId: z.coerce.number().int().positive(),
+    at: isoDateTime,
+  }),
 });
 
 // GET /children/:id/history, GET /groups/:id/history

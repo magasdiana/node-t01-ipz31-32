@@ -102,29 +102,78 @@ export default {
         },
       },
     },
-    "/history/state": {
-      get: {
-        tags: ["History"],
-        summary: "Стан історії",
-        description: "Кількість записів і останній запис.",
-        responses: {
-          200: {
-            description: "Стан",
-            content: {
-              "application/json": {
-                schema: {
+    
+"/history/state": {
+  get: {
+    tags: ["History"],
+    summary: "Відновлення стану сутності на заданий момент часу",
+    description:
+      "Повертає стан сутності на вказаний момент часу на основі записів історії. Якщо сутність ще не існувала або вже була видалена на цей момент, повертає 404.",
+    parameters: [
+      {
+        name: "entity",
+        in: "query",
+        required: true,
+        schema: {
+          type: "string",
+          enum: ["child", "group"],
+        },
+        description: "Тип сутності",
+      },
+      {
+        name: "entityId",
+        in: "query",
+        required: true,
+        schema: {
+          type: "integer",
+          minimum: 1,
+        },
+        description: "Ідентифікатор сутності",
+      },
+      {
+        name: "at",
+        in: "query",
+        required: true,
+        schema: {
+          type: "string",
+          format: "date-time",
+        },
+        description: "Момент часу для відновлення стану (ISO 8601)",
+        example: "2026-10-05T12:00:00.000Z",
+      },
+    ],
+    responses: {
+      200: {
+        description: "Стан сутності на заданий момент часу",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                state: {
                   type: "object",
-                  properties: {
-                    total: { type: "integer" },
-                    last: { ...entry, nullable: true },
-                  },
+                  description: "Відновлений стан сутності",
+                  additionalProperties: true,
                 },
               },
+              required: ["state"],
             },
           },
         },
       },
+      400: {
+        description: "Некоректні або відсутні параметри запиту",
+        content: errorBody,
+      },
+      404: {
+        description:
+          "Сутність ще не існувала або вже була видалена на вказаний момент часу",
+        content: errorBody,
+      },
     },
+  },
+},
+
     "/history/{id}": {
       get: {
         tags: ["History"],

@@ -14,6 +14,9 @@ export const isoDate = z
     return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
   }, "Неіснуюча дата");
 
+  // Дата й час у форматі ISO 8601
+export const isoDateTime = z.string().datetime();
+
 // Діапазон дат для query: ?from=2026-09-01&to=2026-09-30
 export const dateRangeQuery = z
   .object({

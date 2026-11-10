@@ -1,3 +1,4 @@
+import { stateAt } from './history.state.js';
 import { toDto } from "../../lib/dto.js";
 import { NotFoundError } from "../../lib/errors.js";
 
@@ -25,7 +26,6 @@ export function createHistoryService({ historyRepository, entityChecks = {} }) {
       return toDto(row);
     },
 
-    // ПРИПУЩЕННЯ: що саме має повертати /history/state, треба уточнити
     async getState() {
       const [total, last] = await Promise.all([
         historyRepository.count(),
@@ -34,13 +34,40 @@ export function createHistoryService({ historyRepository, entityChecks = {} }) {
       return { total, last: last ? toDto(last) : null };
     },
 
-    // entityKey збігається зі значенням data.entity у записах історії
     async listForEntity(entityKey, entityId, filters) {
       const check = entityChecks[entityKey];
       if (!check)
         throw new Error(`Не налаштовано перевірку для сутності ${entityKey}`);
-      await check(entityId); // кидає 404, якщо запису немає
-      return list({ ...filters, entity: entityKey, entityId });
+      await check(entityId); // кидає 404, якщо запису немає в поточній таблиці (для списку історії активної сутності це ок)
+      return list({ ...filters, entity: entityKey, entityId: Number(entityId) });
+    },
+
+    async getStateAt(entityKey, entityId, at) {
+      // Перевіряємо, чи підтримується така сутність у конфізі
+      const check = entityChecks[entityKey];
+      if (!check) {
+        throw new Error(`Не налаштовано перевірку для сутності ${entityKey}`);
+      }
+
+      // Отримуємо всі записи історії для цієї сутності, відсортовані від старих до нових
+      const { items } = await historyRepository.findMany({ 
+        entity: entityKey, 
+        entityId: Number(entityId),
+        sort: 'asc' // переконайся, що репозиторій сортує від найстаріших до найновіших, або відсортуй тут
+      });
+
+      if (!items || items.length === 0) {
+        throw new NotFoundError('Сутність або її історія не знайдена');
+      }
+
+      // Проганяємо через чисту функцію stateAt
+      const state = stateAt(items, at);
+
+      if (!state) {
+        throw new NotFoundError('Стан сутності на вказаний момент часу не знайдено (сутність ще не існувала або вже була видалена)');
+      }
+
+      return state;
     },
   };
 }
