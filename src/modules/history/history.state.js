@@ -10,12 +10,7 @@ export function stateAt(entries, at) {
   const targetTime = new Date(at).getTime();
 
   const validEntries = entries.filter((entry) => {
-    const entryTime = new Date(
-      entry.data?.changedAt ||
-      entry.data?.createdAt ||
-      entry.changedAt ||
-      entry.createdAt
-    ).getTime();
+    const entryTime = new Date(entry.data?.createdAt).getTime();
 
     return entryTime <= targetTime;
   });
@@ -25,11 +20,11 @@ export function stateAt(entries, at) {
   }
 
   const latestEntry = validEntries[validEntries.length - 1];
-  const action = latestEntry.data?.action || latestEntry.action;
+  const action = latestEntry.data?.action;
 
   if (action === "delete") {
     return null;
   }
 
-  return latestEntry.data?.after || latestEntry.after || null;
+  return latestEntry.data?.changes?.after || null;
 }

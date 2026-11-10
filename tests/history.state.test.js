@@ -1,5 +1,6 @@
+
 import test from 'node:test';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import { stateAt } from '../src/modules/history/history.state.js';
 
 test('stateAt: покриває всі сценарії (створено, після 1-го оновлення, після 2-го оновлення, видалено, до створення)', async (t) => {
@@ -7,32 +8,40 @@ test('stateAt: покриває всі сценарії (створено, пі�
     {
       data: {
         action: 'create',
-        changedAt: '2026-11-01T10:00:00.000Z',
-        after: { id: 1, name: 'Test 1', status: 'active' }
+        createdAt: '2026-11-01T10:00:00.000Z',
+        changes: {
+          after: { id: 1, name: 'Test 1', status: 'active' }
+        }
       }
     },
     {
       data: {
         action: 'update',
-        changedAt: '2026-11-02T10:00:00.000Z',
-        before: { id: 1, name: 'Test 1', status: 'active' },
-        after: { id: 1, name: 'Test 2', status: 'active' }
+        createdAt: '2026-11-02T10:00:00.000Z',
+        changes: {
+          before: { id: 1, name: 'Test 1', status: 'active' },
+          after: { id: 1, name: 'Test 2', status: 'active' }
+        }
       }
     },
     {
       data: {
         action: 'update',
-        changedAt: '2026-11-03T10:00:00.000Z',
-        before: { id: 1, name: 'Test 2', status: 'active' },
-        after: { id: 1, name: 'Test 3', status: 'pending' }
+        createdAt: '2026-11-03T10:00:00.000Z',
+        changes: {
+          before: { id: 1, name: 'Test 2', status: 'active' },
+          after: { id: 1, name: 'Test 3', status: 'pending' }
+        }
       }
     },
     {
       data: {
         action: 'delete',
-        changedAt: '2026-11-04T10:00:00.000Z',
-        before: { id: 1, name: 'Test 3', status: 'pending' },
-        after: null
+        createdAt: '2026-11-04T10:00:00.000Z',
+        changes: {
+          before: { id: 1, name: 'Test 3', status: 'pending' },
+          after: null
+        }
       }
     }
   ];

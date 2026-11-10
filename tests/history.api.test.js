@@ -12,6 +12,7 @@ import {
 import { notFound, errorHandler } from "../src/middleware/errorHandler.js";
 import { NotFoundError } from "../src/lib/errors.js";
 
+
 const entry = (id, entity, entityId, action, createdAt) => ({
   id,
   data: {
@@ -19,10 +20,14 @@ const entry = (id, entity, entityId, action, createdAt) => ({
     entityId,
     action,
     createdAt,
-    changes: {},
-    after: { id: entityId, name: "Test" },
+    changes: {
+      after: action === "delete"
+        ? null
+        : { id: entityId, name: "Test" },
+    },
   },
 });
+
 
 const fixtures = [
   entry(1, "child", 1, "create", "2026-10-01T09:00:00.000Z"),
