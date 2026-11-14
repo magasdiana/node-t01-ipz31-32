@@ -1,9 +1,18 @@
-
 import { prisma } from '../../lib/prisma.js';
 
 export const reportsRepository = {
+  async getForecastChildren() {
+    return prisma.child.findMany({ orderBy: { id: 'asc' } });
+  },
+
+  async getForecastPrices() {
+    return prisma.priceSettings.findFirst({
+      orderBy: { id: 'desc' },
+    });
+  },
+
   async getPayments() {
-    return await prisma.payment.findMany({
+    return prisma.payment.findMany({
       include: {
         child: true,
       },
@@ -11,7 +20,7 @@ export const reportsRepository = {
   },
 
   async getGroupsWithChildrenCount() {
-    return await prisma.group.findMany({
+    return prisma.group.findMany({
       include: {
         _count: {
           select: { children: true },
@@ -21,10 +30,10 @@ export const reportsRepository = {
   },
 
   async getRooms() {
-    return await prisma.room.findMany();
+    return prisma.room.findMany();
   },
 
   async getStaffWithSalaries() {
-    return await prisma.staff.findMany();
+    return prisma.staff.findMany();
   },
 };
