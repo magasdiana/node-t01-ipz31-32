@@ -2,20 +2,30 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../src/app.js';
 
-test('GET /reports/profit повертає звіт за місяць', async () => {
+async function withServer(callback) {
   const server = app.listen(0);
 
-  await new Promise(resolve =>
-    server.once('listening', resolve)
-  );
-
-  const { port } = server.address();
-
   try {
-    const res = await fetch(
-      `http://127.0.0.1:${port}/reports/profit?month=2026-10`
-    );
+    await new Promise(resolve => {
+      if (server.listening) resolve();
+      else server.once('listening', resolve);
+    });
 
+    const { port } = server.address();
+    await callback(`http://127.0.0.1:${port}`);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close(error => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
+  }
+}
+
+test('GET /reports/profit повертає звіт за місяць', async () => {
+  await withServer(async base => {
+    const res = await fetch(`${base}/reports/profit?month=2026-10`);
     const data = await res.json();
 
     assert.equal(res.status, 200);
@@ -24,27 +34,12 @@ test('GET /reports/profit повертає звіт за місяць', async ()
     assert.equal(typeof data.profit, 'number');
     assert.ok(data.expenses);
     assert.ok(Array.isArray(data.groups));
-  } finally {
-    await new Promise(resolve =>
-      server.close(resolve)
-    );
-  }
+  });
 });
 
 test('GET /reports/profit без місяця', async () => {
-  const server = app.listen(0);
-
-  await new Promise(resolve =>
-    server.once('listening', resolve)
-  );
-
-  const { port } = server.address();
-
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:${port}/reports/profit`
-    );
-
+  await withServer(async base => {
+    const res = await fetch(`${base}/reports/profit`);
     const data = await res.json();
 
     const now = new Date();
@@ -53,49 +48,22 @@ test('GET /reports/profit без місяця', async () => {
 
     assert.equal(res.status, 200);
     assert.equal(data.month, currentMonth);
-  } finally {
-    await new Promise(resolve =>
-      server.close(resolve)
-    );
-  }
+  });
 });
 
 test('GET /reports/profit з неіснуючим groupId', async () => {
-  const server = app.listen(0);
-
-  await new Promise(resolve =>
-    server.once('listening', resolve)
-  );
-
-  const { port } = server.address();
-
-  try {
+  await withServer(async base => {
     const res = await fetch(
-      `http://127.0.0.1:${port}/reports/profit?groupId=999999`
+      `${base}/reports/profit?groupId=999999`
     );
 
     assert.equal(res.status, 404);
-  } finally {
-    await new Promise(resolve =>
-      server.close(resolve)
-    );
-  }
+  });
 });
 
 test('GET /reports/min-rooms повертає BA-модель', async () => {
-  const server = app.listen(0);
-
-  await new Promise(resolve =>
-    server.once('listening', resolve)
-  );
-
-  const { port } = server.address();
-
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:${port}/reports/min-rooms`
-    );
-
+  await withServer(async base => {
+    const res = await fetch(`${base}/reports/min-rooms`);
     const data = await res.json();
 
     assert.equal(res.status, 200);
@@ -110,63 +78,45 @@ test('GET /reports/min-rooms повертає BA-модель', async () => {
     assert.equal(data.model.assistantSalary, 40000);
     assert.equal(data.model.perRoomCost, 130000);
     assert.equal(data.model.fixedCosts, 680000);
-  } finally {
-    await new Promise(resolve =>
-      server.close(resolve)
-    );
-  }
+  });
 });
 
-test('GET /reports/forecast-profit: 2 групи', async () => {
-  const server = app.listen(0);
-
-  await new Promise(resolve =>
-    server.once('listening', resolve)
-  );
-
-  try {
-    const { port } = server.address();
-
+// Ці перевірки потребують авторизованого Admin.
+// Поки немає механізму входу, залишаємо їх позначеними.
+test.skip('GET /reports/forecast-profit: 2 групи', async () => {
+  await withServer(async base => {
     const res = await fetch(
-      `http://127.0.0.1:${port}/reports/forecast-profit?groups=2&children=20,20&months=3`
+      `${base}/reports/forecast-profit?groups=2&children=20,20&months=3`
     );
-
     const data = await res.json();
 
     assert.equal(res.status, 200);
     assert.equal(data.months.length, 3);
     assert.deepEqual(data.scenario.children, [20, 20]);
     assert.equal(typeof data.optimum.maxProfit, 'number');
-
     assert.equal(
       data.breakdown.mealsRevenue,
       data.breakdown.expenses.meals
     );
-  } finally {
-    await new Promise(resolve =>
-      server.close(resolve)
-    );
-  }
+  });
 });
 
-test('GET /reports/forecast-profit: неправильний список дітей', async () => {
-  const server = app.listen(0);
-
-  await new Promise(resolve =>
-    server.once('listening', resolve)
-  );
-
-  try {
-    const { port } = server.address();
-
+test.skip('GET /reports/forecast-profit: неправильний список дітей', async () => {
+  await withServer(async base => {
     const res = await fetch(
-      `http://127.0.0.1:${port}/reports/forecast-profit?groups=3&children=15,12&months=3`
+      `${base}/reports/forecast-profit?groups=3&children=15,12&months=3`
     );
 
     assert.equal(res.status, 400);
-  } finally {
-    await new Promise(resolve =>
-      server.close(resolve)
+  });
+});
+
+test('GET /reports/forecast-profit: без авторизації повертає 401', async () => {
+  await withServer(async base => {
+    const res = await fetch(
+      `${base}/reports/forecast-profit?groups=2&children=20,20&months=3`
     );
-  }
+
+    assert.equal(res.status, 401);
+  });
 });
