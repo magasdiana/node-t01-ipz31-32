@@ -7,6 +7,15 @@ datasource db {
   url       = env("DATABASE_URL")
 }
 
+model User {
+  id       Int     @id @default(autoincrement())
+  data     Json    // login, passwordHash (лише bcrypt-хеш), role
+  children Child[]
+  staff    Staff?
+
+  @@map("users")
+}
+
 model Room {
   id     Int     @id @default(autoincrement())
   data   Json    // назва, cost
@@ -30,8 +39,10 @@ model Group {
 model Child {
   id       Int       @id @default(autoincrement())
   groupId  Int?      @map("group_id")
+  parentId Int?      @map("parent_id") // користувач-батько (role = parent), FR-04/FR-22
   data     Json      // ім'я, дата народження, батьки (3), родич-депутат, вподобання, пільга
   group    Group?    @relation(fields: [groupId], references: [id])
+  parent   User?     @relation(fields: [parentId], references: [id])
   payments Payment[]
 
   @@map("children")
@@ -40,8 +51,10 @@ model Child {
 model Staff {
   id            Int            @id @default(autoincrement())
   groupId       Int?           @map("group_id") // вихователь і помічник належать групі
+  userId        Int?           @unique @map("user_id") // обліковий запис викладача (role = teacher), FR-21/FR-22
   data          Json           // ПІБ, посада, зарплата
   group         Group?         @relation(fields: [groupId], references: [id])
+  user          User?          @relation(fields: [userId], references: [id])
   staffSubjects StaffSubject[]
   lessons       Lesson[]
 
