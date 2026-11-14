@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import { AppError } from "../lib/errors.js";
+import { safeErrorForLog } from "../lib/redact.js";
 
 const send = (res, status, message, details) =>
   res.status(status).json({
@@ -20,7 +21,7 @@ export function errorHandler(err, req, res, next) {
     return send(res, 400, "Помилка валідації", err.issues);
   }
 
-  // Наші помилки (BadRequestError, NotFoundError, ConflictError)
+  // Наші помилки (BadRequest, Unauthorized, Forbidden, NotFound, Conflict)
   if (err instanceof AppError) {
     return send(res, err.status, err.message, err.details);
   }
@@ -54,7 +55,7 @@ export function errorHandler(err, req, res, next) {
     return send(res, err.status, err.message);
   }
 
-  // Усе інше: деталі лише в логах сервера, клієнту загальне повідомлення
-  console.error(err);
+  // Усе інше: деталі лише в логах сервера (без секретів), клієнту загальне повідомлення
+  console.error(safeErrorForLog(err));
   return send(res, 500, "Внутрішня помилка сервера");
 }
