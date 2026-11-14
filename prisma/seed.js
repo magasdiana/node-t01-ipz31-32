@@ -8,6 +8,7 @@ import {
   ROOM,
   SALARY,
 } from "../src/config/constants.js";
+import { seedUsers } from "./seed.users.js";
 
 // Seed стирає всі дані, тому в production він заборонений
 if (process.env.NODE_ENV === "production") {
@@ -61,6 +62,7 @@ async function clear(tx) {
   await tx.room.deleteMany();
   await tx.priceHistory.deleteMany();
   await tx.priceSettings.deleteMany();
+  await tx.user.deleteMany(); // users після staff і children (FK parent_id, user_id)
 
   // Записи history незмінні: тригер забороняє DELETE, тому deleteMany тут не
   // підходить. TRUNCATE не викликає рядкові тригери. Це також прибирає записи
@@ -153,6 +155,12 @@ async function seedAll(tx) {
   await setHistoryContext(tx, `seed-${runId}`);
 
   await clear(tx);
+
+  // Демо-акаунти: admin, manager, parent, teacher. Прив'язку parent до дитини
+  // (children.parent_id) і teacher до співробітника (staff.user_id) робить Богдан:
+  // він замінить цей рядок на `const users = await seedUsers(tx);`
+  // і візьме users.parent.id та users.teacher.id
+  await seedUsers(tx);
 
   // Кімнати: по одній на групу
   const rooms = [];
