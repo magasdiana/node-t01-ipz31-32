@@ -1,7 +1,9 @@
+
 import { Router } from 'express';
 import { reportsController } from './reports.controller.js';
 import { validate } from '../../middleware/validate.js';
-import { requireAdmin } from '../../middleware/requireAdmin.js';
+import { authorize } from '../../middleware/auth.js';
+import { ROLES } from '../../config/roles.js';
 
 import {
   getProfitSchema,
@@ -13,7 +15,7 @@ const router = Router();
 
 router.get(
   '/forecast-profit',
-  requireAdmin,
+  authorize(ROLES.ADMIN),
   validate(getForecastProfitSchema),
   reportsController.getForecastProfit
 );
