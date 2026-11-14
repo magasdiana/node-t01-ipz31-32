@@ -1,3 +1,5 @@
+import authDocs from "../modules/auth/auth.docs.js";
+import usersDocs from "../modules/users/users.docs.js";
 import childrenDocs from "../modules/children/children.docs.js";
 import groupsDocs from "../modules/groups/groups.docs.js";
 import roomsDocs from "../modules/rooms/rooms.docs.js";
@@ -11,6 +13,8 @@ import pricingDocs from "../modules/pricing/pricing.docs.js";
 import historyDocs from "../modules/history/history.docs.js";
 
 const modules = [
+  authDocs,
+  usersDocs,
   childrenDocs,
   groupsDocs,
   staffDocs,
@@ -29,8 +33,21 @@ export const openapiSpec = {
   openapi: "3.0.3",
   info: {
     title: "Garden API",
-    version: "0.1.0",
-    description: "REST API садка. Авторизації немає, усі ендпоінти відкриті.",
+    version: "0.2.0",
+    description:
+      "REST API садка. Авторизація: JWT. Отримайте токен через POST /auth/login і натисніть Authorize у Swagger. Відкриті лише /auth/login, /docs і /health.",
   },
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "Токен із POST /auth/login",
+      },
+    },
+  },
+  // Типово всі маршрути захищені; відкриті позначені security: []
+  security: [{ bearerAuth: [] }],
   paths: Object.assign({}, ...modules.map((m) => m.paths)),
 };

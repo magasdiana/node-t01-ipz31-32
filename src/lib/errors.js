@@ -14,6 +14,20 @@ export class BadRequestError extends AppError {
   }
 }
 
+// 401: немає токена, він недійсний або прострочений
+export class UnauthorizedError extends AppError {
+  constructor(message = "Потрібна авторизація", details) {
+    super(401, message, details);
+  }
+}
+
+// 403: користувач відомий, але його роль не має права на дію
+export class ForbiddenError extends AppError {
+  constructor(message = "Недостатньо прав", details) {
+    super(403, message, details);
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message = "Запис не знайдено", details) {
     super(404, message, details);
