@@ -177,77 +177,145 @@ function scenarioSizes(query, allGroups, allChildren) {
 }
 
 export const reportsService = {
-  async getForecastProfit(query = {}) {
-    const [groups, children, settings] = await Promise.all([
-      reportsRepository.getGroupsWithChildrenCount(),
-      reportsRepository.getForecastChildren(),
-      reportsRepository.getForecastPrices(),
-    ]);
 
-    const sizes = scenarioSizes(query, groups, children);
+async getForecastProfit(query = {}) {
+  const [groups, children, settings] = await Promise.all([
+    reportsRepository.getGroupsWithChildrenCount(),
+    reportsRepository.getForecastChildren(),
+    reportsRepository.getForecastPrices(),
+  ]);
 
-    const prices = {
-      ...DEFAULT_PRICES,
-      ...(settings?.data ?? {}),
+const orderedGroups = [...groups].sort(
+  (a, b) => a.id - b.id
+);
 
-      mealsPerDayByAge: {
-        ...DEFAULT_PRICES.mealsPerDayByAge,
-        ...(settings?.data?.mealsPerDayByAge ?? {}),
-      },
+const sizes = scenarioSizes(
+  query,
+  orderedGroups,
+  children
+);
 
-      benefitPercent: {
-        ...DEFAULT_PRICES.benefitPercent,
-        ...(settings?.data?.benefitPercent ?? {}),
-      },
-    };
+  const prices = {
+    ...DEFAULT_PRICES,
+    ...(settings?.data ?? {}),
 
-    const { ageInYears } = await import('../../lib/age.js');
+    mealsPerDayByAge: {
+      ...DEFAULT_PRICES.mealsPerDayByAge,
+      ...(settings?.data?.mealsPerDayByAge ?? {}),
+    },
 
-    const profiles = sizes.map((_, i) => {
-      const group = groups[i];
+    benefitPercent: {
+      ...DEFAULT_PRICES.benefitPercent,
+      ...(settings?.data?.benefitPercent ?? {}),
+    },
+  };
 
-      return group
-        ? children
-            .filter(c => c.groupId === group.id)
-            .map(c => ({
-              age: c.data?.birthDate
-                ? ageInYears(c.data.birthDate)
-                : (group.data?.age ?? 3),
+  const { ageInYears } = await import('../../lib/age.js');
 
-              benefitType:
-                c.data?.benefitType ?? 'none',
-            }))
-        : [];
+const sortedGroups = orderedGroups;
+
+  const sortedChildren = [...children].sort((a, b) => {
+    const aGroupIndex = sortedGroups.findIndex(
+      group => group.id === a.groupId
+    );
+
+    const bGroupIndex = sortedGroups.findIndex(
+      group => group.id === b.groupId
+    );
+
+    const aIndex =
+      aGroupIndex === -1
+        ? sortedGroups.length
+        : aGroupIndex;
+
+    const bIndex =
+      bGroupIndex === -1
+        ? sortedGroups.length
+        : bGroupIndex;
+
+    return aIndex - bIndex || a.id - b.id;
+  });
+
+  const toProfile = child => ({
+    age: child.data?.birthDate
+      ? ageInYears(child.data.birthDate)
+      : 3,
+
+    benefitType:
+      child.data?.benefitType ?? 'none',
+  });
+
+  const existingSizes = sortedGroups.map(group =>
+    children.filter(
+      child => child.groupId === group.id
+    ).length
+  );
+
+  const sameDistribution =
+    sizes.length === existingSizes.length &&
+    sizes.every(
+      (size, index) => size === existingSizes[index]
+    );
+
+  let profiles;
+
+  if (sameDistribution) {
+    profiles = sortedGroups.map(group =>
+      sortedChildren
+        .filter(child => child.groupId === group.id)
+        .map(toProfile)
+    );
+  } else {
+    const availableProfiles =
+      sortedChildren.map(toProfile);
+
+    let offset = 0;
+
+    profiles = sizes.map(size => {
+      const groupProfiles =
+        availableProfiles.slice(
+          offset,
+          offset + size
+        );
+
+      offset += size;
+
+      return groupProfiles;
     });
+  }
 
-    const result = calculateForecast({
-      groupSizes: sizes,
-      profiles,
-      prices,
-      months: query.months ?? 3,
+  const forecastMonths = query.months ?? 3;
 
-      fixedCosts: MIN_ROOMS_FIXED_COSTS,
-      roomCost: ROOM.ROOM_COST_DEFAULT,
+  const result = calculateForecast({
+    groupSizes: sizes,
+    profiles,
+    prices,
+    months: forecastMonths,
 
-      educatorSalary: SALARY.EDUCATOR_BASE,
-      assistantSalary: SALARY.ASSISTANT_BASE,
+    fixedCosts: MIN_ROOMS_FIXED_COSTS,
+    roomCost: ROOM.ROOM_COST_DEFAULT,
 
-      bonusRules: GROUP_BONUS_RULES,
-      workingDays:
-        ASSUMPTIONS.A1_WORKING_DAYS_PER_MONTH,
+    educatorSalary: SALARY.EDUCATOR_BASE,
+    assistantSalary: SALARY.ASSISTANT_BASE,
 
-      maxRooms: REPORTS.MAX_ROOMS_SEARCH,
-    });
+    bonusRules: GROUP_BONUS_RULES,
 
-    return {
-      scenario: {
-        groups: sizes.length,
-        children: sizes,
-        months: query.months ?? 3,
-      },
-      ...result,
-    };
-  },
+    workingDays:
+      ASSUMPTIONS.A1_WORKING_DAYS_PER_MONTH,
+
+    maxRooms: REPORTS.MAX_ROOMS_SEARCH,
+  });
+
+  return {
+    scenario: {
+      groups: sizes.length,
+      children: sizes,
+      months: forecastMonths,
+    },
+    ...result,
+  };
+},
+
 
   async getProfit({ month, groupId } = {}) {
     const targetMonth = month ?? currentMonth();

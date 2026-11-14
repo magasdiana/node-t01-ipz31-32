@@ -1,4 +1,7 @@
-// Чисті функції: без бази даних і Express.
+
+/**
+ * Чисті функції: без Prisma та Express.
+ */
 
 export function round2(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -10,6 +13,7 @@ export function paymentShareForMonth(payment, month) {
   if (!data) return { total: 0, meals: 0 };
 
   const amount = Number(data.amount) || 0;
+
   const mealItem = Array.isArray(data.items)
     ? data.items.find(
         item => item.name === 'meals' || item.type === 'meal'
@@ -22,23 +26,35 @@ export function paymentShareForMonth(payment, month) {
     if (!data.periodStart) return { total: 0, meals: 0 };
 
     const [sy, sm] = String(data.periodStart)
-      .slice(0, 7).split('-').map(Number);
+      .slice(0, 7)
+      .split('-')
+      .map(Number);
+
     const [ty, tm] = month.split('-').map(Number);
 
     const startIndex = sy * 12 + sm - 1;
     const targetIndex = ty * 12 + tm - 1;
 
-    if (targetIndex < startIndex || targetIndex >= startIndex + 12) {
+    if (
+      targetIndex < startIndex ||
+      targetIndex >= startIndex + 12
+    ) {
       return { total: 0, meals: 0 };
     }
 
-    return { total: amount / 12, meals: meals / 12 };
+    return {
+      total: amount / 12,
+      meals: meals / 12,
+    };
   }
 
   const paymentDate =
     data.date || data.periodStart || payment.createdAt;
 
-  if (!paymentDate || String(paymentDate).slice(0, 7) !== month) {
+  if (
+    !paymentDate ||
+    String(paymentDate).slice(0, 7) !== month
+  ) {
     return { total: 0, meals: 0 };
   }
 
@@ -55,7 +71,8 @@ export function calcGroupBonuses(n, rules) {
   }
 
   if (n >= rules.perChildFrom) {
-    total += (n - rules.perChildFrom + 1) *
+    total +=
+      (n - rules.perChildFrom + 1) *
       (rules.perChildEducator + rules.perChildAssistant);
   }
 
@@ -64,9 +81,10 @@ export function calcGroupBonuses(n, rules) {
 
 export function calcProfit({ revenue, expenses }) {
   const totalExpenses =
-    expenses.rooms +
-    expenses.salaries +
-    expenses.allowances;
+    (Number(expenses.rooms) || 0) +
+    (Number(expenses.salaries) || 0) +
+    (Number(expenses.allowances) || 0) +
+    (Number(expenses.meals) || 0);
 
   return {
     revenue,
@@ -104,8 +122,20 @@ export function minRooms({
   };
 }
 
+/**
+ * Спільний пошук оптимуму.
+ *
+ * Звичайна модель:
+ *   groupSizes + netRevenuePerChild + perRoomCost
+ *
+ * Сценарна модель:
+ *   groupRows = [{ children, margin }]
+ *
+ * В обох випадках групи впорядковуються за кількістю дітей.
+ */
 export function findOptimum({
-  groupSizes,
+  groupSizes = [],
+  groupRows,
   netRevenuePerChild,
   perRoomCost,
   fixedCosts,
@@ -113,32 +143,49 @@ export function findOptimum({
   bonusRules,
   extraTeachers,
 }) {
-  const sizes = [...groupSizes].sort((a, b) => b - a);
-  const limit = Math.min(maxRooms, sizes.length);
+  const rows = groupRows
+    ? groupRows.map(row => ({
+        children: Number(row.children) || 0,
+        margin: Number(row.margin) || 0,
+      }))
+    : groupSizes.map(size => ({
+        children: size,
+        margin:
+          size * netRevenuePerChild -
+          perRoomCost -
+          calcGroupBonuses(size, bonusRules),
+      }));
+
+  rows.sort((a, b) => b.children - a.children);
+
+  const limit = Math.min(
+    maxRooms ?? rows.length,
+    rows.length
+  );
 
   const table = [];
+
   let children = 0;
   let groupsProfit = 0;
 
   for (let rooms = 1; rooms <= limit; rooms++) {
-    const size = sizes[rooms - 1];
+    const row = rows[rooms - 1];
 
-    children += size;
-
-    groupsProfit +=
-      size * netRevenuePerChild -
-      perRoomCost -
-      calcGroupBonuses(size, bonusRules);
+    children += row.children;
+    groupsProfit += row.margin;
 
     const extraCost = extraTeachers
-      ? (Math.ceil(rooms / extraTeachers.groupsPerBlock) - 1) *
-        extraTeachers.blockCost
+      ? (
+          Math.ceil(rooms / extraTeachers.groupsPerBlock) - 1
+        ) * extraTeachers.blockCost
       : 0;
 
     table.push({
       rooms,
       children,
-      profit: groupsProfit - fixedCosts - extraCost,
+      profit: round2(
+        groupsProfit - fixedCosts - extraCost
+      ),
     });
   }
 
@@ -149,7 +196,7 @@ export function findOptimum({
       bestChildren: null,
       plateauRooms: null,
       table,
-      note: 'Немає дітей для розрахунку',
+      note: 'Немає груп для розрахунку',
     };
   }
 
@@ -171,18 +218,25 @@ export function findOptimum({
   }
 
   return {
+    maxProfit: best.profit,
     bestRooms: best.rooms,
     bestChildren: best.children,
-    maxProfit: best.profit,
     plateauRooms,
     table,
-    note: plateauRooms === null
-      ? 'У межах розрахунку прибуток лише зростає'
-      : null,
+    note:
+      plateauRooms === null
+        ? 'У межах розрахунку прибуток лише зростає'
+        : null,
   };
 }
 
-// Сценарний прогноз. Не читає й не змінює БД.
+/**
+ * Сценарний прогноз.
+ * Не читає й не змінює БД.
+ *
+ * profiles[i] — профілі дітей сценарної групи i.
+ * Якщо профілю немає: вік 3 роки, пільга 0%.
+ */
 export function calculateForecast({
   groupSizes,
   profiles,
@@ -196,6 +250,13 @@ export function calculateForecast({
   workingDays,
   maxRooms,
 }) {
+  const benefitMap = {
+    none: 'NONE',
+    min: 'LEVEL_1',
+    medium: 'LEVEL_2',
+    max: 'LEVEL_3',
+  };
+
   const groupRows = groupSizes.map((size, index) => {
     const children = profiles[index] ?? [];
 
@@ -203,143 +264,115 @@ export function calculateForecast({
     let meals = 0;
 
     for (let i = 0; i < size; i++) {
-      const child = children[i] ?? {
-        age: 3,
-        benefitType: 'none',
-      };
+      const child = children[i];
 
-      const benefitMap = {
-        none: 'NONE',
-        min: 'LEVEL_1',
-        medium: 'LEVEL_2',
-        max: 'LEVEL_3',
-      };
+      const rawBenefit = String(
+        child?.benefitType ?? 'none'
+      );
 
       const benefitKey =
-        benefitMap[
-          String(child.benefitType ?? 'none').toLowerCase()
-        ] ?? child.benefitType;
+        benefitMap[rawBenefit.toLowerCase()] ??
+        rawBenefit;
 
       const benefit = Number(
         prices.benefitPercent[benefitKey] ?? 0
       );
 
-      tuition += prices.tuitionMonthly * (1 - benefit / 100);
+      const tuitionPrice =
+        Number(prices.tuitionMonthly) || 0;
 
-      const age = Number(child.age);
+      tuition +=
+        tuitionPrice * (1 - benefit / 100);
 
-      meals += Number(
+      const age =
+        child?.age === undefined ||
+        child?.age === null
+          ? 3
+          : Number(child.age);
+
+      const mealPrice = Number(
         prices.mealsPerDayByAge[age] ??
-        prices.mealsPerDayByAge[3]
-      ) * workingDays;
+        prices.mealsPerDayByAge[3] ??
+        0
+      );
+
+      meals += mealPrice * workingDays;
     }
 
+    const allowances = calcGroupBonuses(
+      size,
+      bonusRules
+    );
+
+    const salaries =
+      educatorSalary + assistantSalary;
+
     return {
-      rooms: 1,
       children: size,
       tuitionRevenue: round2(tuition),
       mealsRevenue: round2(meals),
       roomCosts: roomCost,
-      salaries: educatorSalary + assistantSalary,
-      allowances: calcGroupBonuses(size, bonusRules),
+      salaries,
+      allowances,
     };
   });
 
-  const table = [];
-
-  for (
-    let rooms = 1;
-    rooms <= Math.min(maxRooms, groupRows.length);
-    rooms++
-  ) {
-    const selected = groupRows.slice(0, rooms);
-
-    const total = key =>
-      selected.reduce((acc, row) => acc + row[key], 0);
-
-    const tuition = total('tuitionRevenue');
-    const meals = total('mealsRevenue');
-    const roomCosts = total('roomCosts');
-    const salaries = total('salaries');
-    const allowances = total('allowances');
-
-    const costs =
-      fixedCosts +
-      roomCosts +
-      salaries +
-      allowances +
-      meals;
-
-    table.push({
-      rooms,
-      children: total('children'),
-      profit: round2(tuition + meals - costs),
-    });
-  }
-
-  let best = table[0] ?? null;
-
-  for (const row of table) {
-    if (row.profit > best.profit) {
-      best = row;
-    }
-  }
-
-  let plateauRooms = null;
-
-  for (let i = 0; i < table.length - 1; i++) {
-    if (table[i + 1].profit <= table[i].profit) {
-      plateauRooms = table[i].rooms;
-      break;
-    }
-  }
+  const sumField = key =>
+    groupRows.reduce(
+      (total, row) => total + row[key],
+      0
+    );
 
   const tuitionRevenue = round2(
-    groupRows.reduce(
-      (acc, row) => acc + row.tuitionRevenue,
-      0
-    )
+    sumField('tuitionRevenue')
   );
 
   const mealsRevenue = round2(
-    groupRows.reduce(
-      (acc, row) => acc + row.mealsRevenue,
-      0
-    )
+    sumField('mealsRevenue')
   );
 
   const expenses = {
     fixed: fixedCosts,
-    rooms: groupRows.reduce(
-      (acc, row) => acc + row.roomCosts,
-      0
-    ),
-    salaries: groupRows.reduce(
-      (acc, row) => acc + row.salaries,
-      0
-    ),
-    allowances: groupRows.reduce(
-      (acc, row) => acc + row.allowances,
-      0
-    ),
+    rooms: round2(sumField('roomCosts')),
+    salaries: round2(sumField('salaries')),
+    allowances: round2(sumField('allowances')),
     meals: mealsRevenue,
   };
 
-  const revenue = round2(tuitionRevenue + mealsRevenue);
+  const revenue = round2(
+    tuitionRevenue + mealsRevenue
+  );
 
   const costs = round2(
     Object.values(expenses).reduce(
-      (a, b) => a + b,
+      (total, amount) => total + amount,
       0
     )
   );
 
   const profit = round2(revenue - costs);
 
+  // Використовуємо єдиний алгоритм пошуку оптимуму.
+  // Харчування входить і в дохід, і у витрати,
+  // тому його чистий внесок у margin дорівнює 0.
+  const optimum = findOptimum({
+    groupRows: groupRows.map(row => ({
+      children: row.children,
+      margin: round2(
+        row.tuitionRevenue -
+        row.roomCosts -
+        row.salaries -
+        row.allowances
+      ),
+    })),
+    fixedCosts,
+    maxRooms,
+  });
+
   const monthRows = Array.from(
     { length: months },
-    (_, i) => ({
-      month: i + 1,
+    (_, index) => ({
+      month: index + 1,
       revenue,
       costs,
       profit,
@@ -355,16 +388,7 @@ export function calculateForecast({
       profit: round2(profit * months),
     },
 
-    optimum: {
-      maxProfit: best?.profit ?? null,
-      bestRooms: best?.rooms ?? null,
-      bestChildren: best?.children ?? null,
-      plateauRooms,
-      table,
-      note: plateauRooms === null
-        ? 'У межах сценарію прибуток лише зростає або є одна група'
-        : null,
-    },
+    optimum,
 
     breakdown: {
       tuitionRevenue,
