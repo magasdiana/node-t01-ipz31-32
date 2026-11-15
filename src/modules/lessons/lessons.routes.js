@@ -2,6 +2,7 @@ import { Router } from "express";
 import { validate } from "../../middleware/validate.js";
 import { lessonsController } from "./lessons.controller.js";
 import { groupLessonsSchema, updateLessonSchema } from "./lessons.schema.js";
+import { parentScope } from "../../middleware/parentScope.js";
 
 // Роутер змонтований з кореня (app.use("/", lessonsRoutes)),
 // бо містить маршрути двох ресурсів: /groups/:id/lessons і /lessons/:id
@@ -10,6 +11,7 @@ const router = Router();
 router.get(
   "/groups/:id/lessons",
   validate(groupLessonsSchema),
+  parentScope.groupParam(),
   lessonsController.listByGroup,
 );
 
