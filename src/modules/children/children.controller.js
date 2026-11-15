@@ -2,10 +2,14 @@
 
 import { asyncHandler } from "../../lib/asyncHandler.js";
 import { childrenService } from "./children.service.js";
+import { ownership } from "../../lib/ownership.js";
 
 export const childrenController = {
   list: asyncHandler(async (req, res) => {
-    res.json(await childrenService.list());
+    const items = await childrenService.list();
+    res.json(
+      await ownership.filterByChild(req.user, items, (child) => child.id),
+    );
   }),
 
   getById: asyncHandler(async (req, res) => {

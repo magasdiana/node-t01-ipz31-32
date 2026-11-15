@@ -136,9 +136,11 @@ export default {
             },
           },
         },
+        description: "Admin і Manager редагують усі поля. Parent може передати лише preferences своєї дитини; будь-яке інше поле дає 403, чужа дитина дає 404.",
         responses: {
           200: { description: "Дитину оновлено" },
           400: errorResponse,
+          403: { ...errorResponse, description: "Parent передав поле, окрім preferences" },
           404: errorResponse,
           409: errorResponse,
         },
