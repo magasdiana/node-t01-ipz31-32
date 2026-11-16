@@ -16,6 +16,13 @@ export const staffRepository = {
     });
   },
 
+  // Співробітник, пов'язаний з обліковим записом (staff.user_id). null, якщо зв'язку немає.
+  async findByUserId(userId) {
+    return prisma.staff.findUnique({
+      where: { userId: Number(userId) },
+    });
+  },
+
   async create(data, groupId) {
     return withRequestContext((tx) =>
       tx.staff.create({

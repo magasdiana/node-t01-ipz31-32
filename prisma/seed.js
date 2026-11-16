@@ -156,11 +156,10 @@ async function seedAll(tx) {
 
   await clear(tx);
 
-  // Демо-акаунти: admin, manager, parent, teacher. Прив'язку parent до дитини
-  // (children.parent_id) і teacher до співробітника (staff.user_id) робить Богдан:
-  // він замінить цей рядок на `const users = await seedUsers(tx);`
-  // і візьме users.parent.id та users.teacher.id
-  await seedUsers(tx);
+  // Демо-акаунти: admin, manager, parent, teacher. Нижче parent прив'язується
+  // до двох дітей (children.parent_id), а teacher до першого викладача
+  // (staff.user_id): на цьому тримаються правила «своє / чуже».
+  const users = await seedUsers(tx);
 
   // Кімнати: по одній на групу
   const rooms = [];
@@ -220,11 +219,14 @@ async function seedAll(tx) {
     },
   });
 
-  // Викладачі: LIMITS.TEACHERS_PER_SUBJECT на кожен гурток, зв'язок через staff_subjects
+  // Викладачі: LIMITS.TEACHERS_PER_SUBJECT на кожен гурток, зв'язок через staff_subjects.
+  // Перший викладач отримує обліковий запис teacher (staff.user_id), решта лишаються без нього.
+  let linkedTeacher = false;
   for (const subject of subjects) {
     for (let k = 1; k <= LIMITS.TEACHERS_PER_SUBJECT; k++) {
       const teacher = await tx.staff.create({
         data: {
+          userId: linkedTeacher ? null : users.teacher.id,
           data: {
             fullName: `Викладач ${subject.data.name} ${k}`,
             position: "teacher",
@@ -232,6 +234,7 @@ async function seedAll(tx) {
           },
         },
       });
+      linkedTeacher = true;
       await tx.staffSubject.create({
         data: { staffId: teacher.id, subjectId: subject.id },
       });
@@ -263,14 +266,19 @@ async function seedAll(tx) {
     });
   }
 
-  // Діти: по 3 в кожній групі, вік відповідає групі
+  // Діти: по 3 в кожній групі, вік відповідає групі.
+  // Parent (демо-акаунт) має двох дітей у різних групах: першу дитину групи 2 років
+  // і першу дитину групи 3 років. Решта дітей «чужі» для нього (parent_id = null).
   const benefits = [null, "LEVEL_1", "LEVEL_3"];
+  const PARENT_CHILD_AGES = [2, 3];
   for (const group of groups) {
     const age = group.data.age;
     for (let j = 0; j < 3; j++) {
+      const isParentChild = j === 0 && PARENT_CHILD_AGES.includes(age);
       const child = await tx.child.create({
         data: {
           groupId: group.id,
+          parentId: isParentChild ? users.parent.id : null,
           data: {
             fullName: `Дитина ${age} років ${j + 1}`,
             birthDate: birthDateForAge(age),

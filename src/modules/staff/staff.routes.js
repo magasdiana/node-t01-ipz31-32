@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { staffController } from './staff.controller.js';
 import { validate } from '../../middleware/validate.js';
+import { authorize } from '../../middleware/auth.js';
+import { ownSchedule } from '../../middleware/teacherOwnership.js';
+import { ACCESS } from '../../config/access.js';
 import {
   createStaffValidation,
   updateStaffValidation,
@@ -10,12 +13,19 @@ import {
 
 const router = Router();
 
-router.get('/', staffController.getAll);
-router.get('/:id', validate(getOrDeleteStaffValidation), staffController.getById);
-router.post('/', validate(createStaffValidation), staffController.create);
-router.patch('/:id', validate(updateStaffValidation), staffController.update);
-router.delete('/:id', validate(getOrDeleteStaffValidation), staffController.delete);
+router.get('/', authorize(ACCESS.STAFF_ALL), staffController.getAll);
+router.get('/:id', authorize(ACCESS.STAFF_ALL), validate(getOrDeleteStaffValidation), staffController.getById);
+router.post('/', authorize(ACCESS.STAFF_ALL), validate(createStaffValidation), staffController.create);
+router.patch('/:id', authorize(ACCESS.STAFF_ALL), validate(updateStaffValidation), staffController.update);
+router.delete('/:id', authorize(ACCESS.STAFF_ALL), validate(getOrDeleteStaffValidation), staffController.delete);
 
-router.get('/:id/schedule', validate(staffScheduleValidation), staffController.getSchedule);
+// Admin бачить будь-який розклад, Teacher лише свій (staff.user_id = req.user.id)
+router.get(
+  '/:id/schedule',
+  authorize(ACCESS.STAFF_SCHEDULE),
+  validate(staffScheduleValidation),
+  ownSchedule,
+  staffController.getSchedule,
+);
 
 export default router;
