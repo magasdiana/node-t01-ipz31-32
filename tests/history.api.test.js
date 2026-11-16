@@ -267,3 +267,75 @@ test("історія тільки для читання: POST, PATCH, DELETE д�
     assert.equal(r.status, 404, method);
   }
 });
+test("GET /history/entity/:entity/:id: універсальна історія сутності", async () => {
+  const r = await call("/history/entity/child/1");
+
+  assert.equal(r.status, 200);
+  assert.deepEqual(
+    r.body.items.map((i) => i.id),
+    [5, 2, 1],
+  );
+  assert.equal(r.body.total, 3);
+});
+
+test("GET /history/entity/:entity/:id: невалідні параметри дають 400", async () => {
+  const unknownEntity = await call("/history/entity/unknown/1");
+  assert.equal(unknownEntity.status, 400);
+
+  const invalidId = await call("/history/entity/room/abc");
+  assert.equal(invalidId.status, 400);
+
+  const negativeId = await call("/history/entity/room/-1");
+  assert.equal(negativeId.status, 400);
+});
+
+test("GET /history/entity/:entity/:id: підтримка всіх 11 сутностей", async () => {
+  const entities = [
+    "room",
+    "group",
+    "child",
+    "staff",
+    "subject",
+    "staffSubject",
+    "lesson",
+    "payment",
+    "priceSettings",
+    "priceHistory",
+    "user",
+  ];
+
+  for (const entity of entities) {
+    const r = await call(`/history/entity/${entity}/1`);
+
+    assert.equal(
+      r.status,
+      200,
+      `Помилка для сутності ${entity}`,
+    );
+  }
+});
+
+test("Універсальна історія: фільтр action", async () => {
+  const r = await call("/history/entity/child/1?action=create");
+
+  assert.equal(r.status, 200);
+  assert.ok(r.body.items.length > 0);
+  assert.ok(r.body.items.every((i) => i.action === "create"));
+});
+
+test("Універсальна історія: пагінація", async () => {
+  const r = await call("/history/entity/child/1?limit=1&offset=0");
+
+  assert.equal(r.status, 200);
+  assert.equal(r.body.items.length, 1);
+  assert.equal(r.body.limit, 1);
+  assert.equal(r.body.offset, 0);
+});
+
+test("Універсальна історія: некоректний діапазон дат", async () => {
+  const r = await call(
+    "/history/entity/child/1?from=2026-12-01&to=2026-01-01",
+  );
+
+  assert.equal(r.status, 400);
+});

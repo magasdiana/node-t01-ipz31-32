@@ -8,6 +8,7 @@ import {
   historyIdSchema,
   historyStateSchema,
   entityHistorySchema,
+  anyEntityHistorySchema,
 } from "./history.schema.js";
 import { historyController } from "./history.controller.js";
 
@@ -21,6 +22,12 @@ export function createHistoryRouter(customController) {
 
   router.get("/", authorize(ACCESS.HISTORY), validate(listHistorySchema), ctrl.list);
   router.get("/state", authorize(ACCESS.HISTORY), validate(historyStateSchema), ctrl.getStateAt);
+  router.get(
+  "/entity/:entity/:id",
+  authorize(ACCESS.HISTORY),
+  validate(anyEntityHistorySchema),
+  ctrl.forAnyEntity,
+);
   router.get("/:id", authorize(ACCESS.HISTORY), validate(historyIdSchema), ctrl.getById);
 
   return router;
