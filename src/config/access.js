@@ -22,7 +22,7 @@ export const ACCESS = Object.freeze({
   // ---------- Групи ----------
   GROUPS_READ: roles(ADMIN, MANAGER), // GET /groups, GET /groups/:id
   GROUPS_WRITE: roles(ADMIN, MANAGER), // POST /groups, PATCH /groups/:id
-  GROUPS_DELETE: roles(ADMIN), // DELETE /groups/:id (у матриці не вказано: лише Admin)
+  GROUPS_DELETE: roles(ADMIN, MANAGER), // DELETE /groups/:id
 
   // ---------- Кімнати ----------
   ROOMS_READ: roles(ADMIN, MANAGER), // GET /rooms, GET /rooms/:id
@@ -42,7 +42,7 @@ export const ACCESS = Object.freeze({
   // ---------- Оплати ----------
   PAYMENTS_READ: roles(ADMIN, MANAGER, PARENT), // GET /payments, GET /payments/:id (Parent: лише свої)
   PAYMENTS_CREATE: roles(ADMIN, MANAGER), // POST /payments
-  PAYMENTS_DELETE: roles(ADMIN), // DELETE /payments/:id (у матриці не вказано: лише Admin)
+  PAYMENTS_DELETE: roles(ADMIN, MANAGER), // DELETE /payments/:id
 
   // ---------- Звіти, ціни, історія, користувачі: лише Admin ----------
   REPORTS: roles(ADMIN), // /reports/profit, /reports/min-rooms, /reports/forecast-profit

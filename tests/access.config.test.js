@@ -57,9 +57,11 @@ test('ACCESS Manager: діти, групи, кімнати й оплати; бе
     'CHILDREN_INVOICE',
     'CHILDREN_READ',
     'CHILDREN_UPDATE',
+    'GROUPS_DELETE',
     'GROUPS_READ',
     'GROUPS_WRITE',
     'PAYMENTS_CREATE',
+    'PAYMENTS_DELETE',
     'PAYMENTS_READ',
     'ROOMS_READ',
   ]);
