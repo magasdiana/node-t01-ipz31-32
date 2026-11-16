@@ -1,10 +1,15 @@
 import { paymentsService } from "./payments.service.js";
+import { ownership } from "../../lib/ownership.js";
+import { NotFoundError } from "../../lib/errors.js";
 
 export const paymentsController = {
   list: async (req, res, next) => {
     try {
       const { childId } = req.validated.query;
-      res.json(await paymentsService.getPayments(childId));
+      const items = await paymentsService.getPayments(childId);
+      res.json(
+        await ownership.filterByChild(req.user, items, (p) => p.childId),
+      );
     } catch (err) {
       next(err);
     }
@@ -13,7 +18,12 @@ export const paymentsController = {
   getById: async (req, res, next) => {
     try {
       const { id } = req.validated.params;
-      res.json(await paymentsService.getById(id));
+      const payment = await paymentsService.getById(id);
+      // чужа оплата для Parent виглядає як неіснуюча
+      if (!(await ownership.ownsChild(req.user, payment.childId))) {
+        throw new NotFoundError("Оплату не знайдено");
+      }
+      res.json(payment);
     } catch (err) {
       next(err);
     }
