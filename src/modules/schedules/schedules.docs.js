@@ -64,6 +64,44 @@ const scheduleResponse = {
   },
 };
 
+const forecastScheduleResponse = {
+  type: "object",
+  properties: {
+    lessons: {
+      type: "array",
+      description: "Заняття, які вдалося запланувати у чернетці",
+      items: scheduledLesson,
+    },
+    unscheduled: {
+      type: "array",
+      description: "Заняття, які не вдалося розмістити в розкладі",
+      items: {
+        type: "object",
+        properties: {
+          groupId: { type: "integer" },
+          subjectId: { type: "integer" },
+          reason: { type: "string" },
+        },
+      },
+    },
+    conflicts: {
+      type: "array",
+      description: "Виявлені конфлікти у чернетці",
+      items: { type: "object" },
+    },
+    roomsNeeded: {
+      type: "integer",
+      example: 4,
+      description: "Кількість потрібних кімнат",
+    },
+    teachersNeeded: {
+      type: "integer",
+      example: 5,
+      description: "Кількість потрібних викладачів",
+    },
+  },
+};
+
 export default {
   paths: {
     "/schedules": {
@@ -106,6 +144,46 @@ export default {
           400: errorResponse("Некоректні дані або помилка валідації"),
           404: errorResponse("Групу не знайдено"),
           409: errorResponse("Нові заняття накладаються на розклад інших груп"),
+        },
+      },
+    },
+    "/schedules/forecast": {
+      get: {
+        tags: ["Schedules"],
+        summary: "Сформувати прогноз розкладу (чернетка без запису в БД)",
+        description:
+          "Формує прогнозований розклад на основі спрогнозованої кількості груп і дітей " +
+          "без запису в базу даних (лише Admin). Враховує сон, харчування (FR-17, FR-18), " +
+          "ліміт 2 заняття на день та усі 5 гуртків для кожної групи.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "query",
+            name: "groups",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 50, example: 4 },
+            description:
+              "Спрогнозована кількість груп (1–50). За замовчуванням = поточна кількість груп із БД.",
+          },
+          {
+            in: "query",
+            name: "children",
+            required: false,
+            schema: { type: "string", example: "15,12,18,14" },
+            description:
+              "Загальна кількість дітей (ціле невід'ємне число) або список по групах через кому (довжина = groups, до 20 дітей у групі).",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Прогнозована чернетка розкладу без запису в БД",
+            content: {
+              "application/json": { schema: forecastScheduleResponse },
+            },
+          },
+          400: errorResponse("Некоректні параметри запиту"),
+          401: errorResponse("Відсутній або невалідний токен"),
+          403: errorResponse("Недостатньо прав (потрібна роль Admin)"),
         },
       },
     },
