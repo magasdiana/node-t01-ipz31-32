@@ -1,3 +1,5 @@
+import { HISTORY_ENTITIES } from "./history.entities.js";
+
 const errorBody = { "application/json": { schema: { type: "object" } } };
 
 const entry = {
@@ -116,7 +118,7 @@ export default {
         required: true,
         schema: {
           type: "string",
-          enum: ["child", "group"],
+          enum: HISTORY_ENTITIES,
         },
         description: "Тип сутності",
       },
@@ -168,6 +170,47 @@ export default {
       404: {
         description:
           "Сутність ще не існувала або вже була видалена на вказаний момент часу",
+        content: errorBody,
+      },
+    },
+  },
+},
+
+"/history/entity/{entity}/{id}": {
+  get: {
+    tags: ["History"],
+    summary: "Історія змін запису будь-якої підтримуваної сутності",
+    description:
+      "Повертає історію запису, включно з видаленими записами. " +
+      "Підтримує фільтри action, from, to та пагінацію limit, offset.",
+    parameters: [
+      {
+        name: "entity",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string",
+          enum: HISTORY_ENTITIES,
+        },
+      },
+      idParam,
+      ...commonQuery,
+    ],
+    responses: {
+      200: {
+        description: "Історія змін запису",
+        content: {
+          "application/json": {
+            schema: list,
+          },
+        },
+      },
+      400: {
+        description: "Некоректна сутність, ID або фільтри",
+        content: errorBody,
+      },
+      403: {
+        description: "Недостатньо прав доступу",
         content: errorBody,
       },
     },

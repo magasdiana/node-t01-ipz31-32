@@ -18,6 +18,18 @@ export function createHistoryController(service) {
       res.json(await service.getById(req.validated.params.id));
     }),
 
+        forAnyEntity: asyncHandler(async (req, res) => {
+      const { entity, id } = req.validated.params;
+
+      res.json(
+        await service.listForAnyEntity(
+          entity,
+          id,
+          req.validated.query,
+        ),
+      );
+    }),
+
     forEntity: (entityKey) =>
       asyncHandler(async (req, res) => {
         res.json(
