@@ -187,6 +187,7 @@ function routes() {
 
     ['PATCH', `/lessons/${ids.ownLesson}`, ACCESS.LESSON_UPDATE, {}],
     ['POST', '/schedules', ACCESS.SCHEDULES_GENERATE, { groupIds: [] }],
+    ['GET', '/schedules/forecast', ACCESS.SCHEDULES_FORECAST],
 
     ['GET', '/payments', ACCESS.PAYMENTS_READ],
     ['GET', `/payments/${MISSING_ID}`, ACCESS.PAYMENTS_READ],
