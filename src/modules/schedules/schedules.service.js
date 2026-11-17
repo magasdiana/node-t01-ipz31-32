@@ -2,11 +2,13 @@ import { generateSchedule } from "./schedules.generator.js";
 import { findConflicts } from "../lessons/lessons.rules.js";
 import { toDto } from "../../lib/dto.js";
 import { ConflictError, NotFoundError } from "../../lib/errors.js";
+import { LIMITS, REPORTS } from "../../config/constants.js";
 
 import * as groupsModule from "../groups/groups.service.js";
 import * as subjectsModule from "../subjects/subjects.service.js";
 import * as staffModule from "../staff/staff.service.js";
 import * as lessonsModule from "../lessons/lessons.repository.js";
+import * as childrenModule from "../children/children.service.js";
 
 // У constants дні 'mon'...'fri', а в БД зберігаємо число 1-5.
 const DAY_NUMBERS = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5 };
@@ -46,10 +48,74 @@ function pickGroups(allGroups, groupIds) {
   return ids.map((id) => byId.get(id));
 }
 
+function scenarioSizes(query, allGroups, allChildren) {
+  const { groups, children } = query;
+  const count = groups ?? allGroups.length;
+
+  if (
+    !Number.isSafeInteger(count) ||
+    count < 1 ||
+    count > REPORTS.MAX_ROOMS_SEARCH
+  ) {
+    throw new RangeError(
+      "groups має бути від 1 до 50; у порожній БД передайте groups явно",
+    );
+  }
+
+  let sizes;
+
+  if (children === undefined) {
+    if (groups === undefined || count === allGroups.length) {
+      sizes = allGroups.map(
+        (g) => allChildren.filter((c) => c.groupId === g.id).length,
+      );
+    } else {
+      const total = allChildren.length;
+      sizes = Array.from(
+        { length: count },
+        (_, i) => Math.floor(total / count) + (i < total % count ? 1 : 0),
+      );
+    }
+  } else if (String(children).includes(",")) {
+    sizes = String(children).split(",").map(Number);
+
+    if (sizes.length !== count) {
+      throw new RangeError("Довжина списку children має дорівнювати groups");
+    }
+  } else {
+    const total = Number(children);
+
+    if (!Number.isSafeInteger(total) || total < 0) {
+      throw new RangeError("Некоректна кількість дітей");
+    }
+
+    sizes = Array.from(
+      { length: count },
+      (_, i) => Math.floor(total / count) + (i < total % count ? 1 : 0),
+    );
+  }
+
+  if (
+    sizes.some(
+      (n) =>
+        !Number.isSafeInteger(n) ||
+        n < 0 ||
+        n > LIMITS.GROUP_MAX_CHILDREN,
+    )
+  ) {
+    throw new RangeError(
+      `Кількість дітей у кожній групі має бути 0–${LIMITS.GROUP_MAX_CHILDREN}`,
+    );
+  }
+
+  return sizes;
+}
+
 export function createSchedulesService({
   groupsService,
   subjectsService,
   staffService,
+  childrenService,
   lessonsRepository,
   generate = generateSchedule,
   conflicts = findConflicts,
@@ -169,15 +235,97 @@ export function createSchedulesService({
     };
   }
 
-  return { generateSchedules };
+  async function forecastSchedule(query = {}) {
+    const [allGroups, allChildren, subjects, staff] = await Promise.all([
+      groupsService.list(),
+      childrenService.list(),
+      subjectsService.list(),
+      staffService.list(),
+    ]);
+
+    const orderedGroups = [...allGroups].sort((a, b) => a.id - b.id);
+    const sizes = scenarioSizes(query, orderedGroups, allChildren);
+
+    // Формуємо масив груп у пам'яті: реальні + шаблонні віртуальні для додаткових груп
+    const scenarioGroups = sizes.map((childrenCount, index) => {
+      const existing = orderedGroups[index];
+      if (existing) {
+        return {
+          id: existing.id,
+          roomId: existing.roomId ?? -(index + 1),
+          childrenCount,
+          isVirtual: false,
+        };
+      }
+      return {
+        id: -(index + 1),
+        roomId: -(index + 1),
+        childrenCount,
+        isVirtual: true,
+      };
+    });
+
+    const teachers = staff
+      .filter((s) => s.position === "teacher")
+      .map((s) => ({ id: s.id, subjectIds: s.subjectIds ?? [] }));
+
+    const { lessons: generated, unscheduled } =
+      subjects.length === 0
+        ? { lessons: [], unscheduled: [] }
+        : generate({
+            groups: scenarioGroups.map((g) => ({
+              id: g.id,
+              roomId: g.roomId,
+            })),
+            subjects: subjects.map((s) => ({ id: s.id })),
+            teachers,
+          });
+
+    const lessons = generated
+      .map((l) => ({ ...l, day: toDayNumber(l.day) }))
+      .sort(sortLessons);
+
+    // Перевіряємо наявність будь-яких конфліктів у сформованій чернетці
+    const detectedConflicts = [];
+    for (let i = 0; i < lessons.length; i += 1) {
+      const current = lessons[i];
+      const others = lessons.slice(i + 1);
+      const found = conflicts(current, others, scenarioGroups);
+      if (found.length > 0) {
+        detectedConflicts.push({ lesson: current, conflicts: found });
+      }
+    }
+
+    // Потрібні кімнати: кожній спрогнозованій групі потрібна 1 кімната
+    const roomsNeeded = scenarioGroups.length;
+
+    // Потрібні викладачі: задіяні у запланованих заняттях + додаткові за предметами, які не вдалося закрити
+    const usedTeacherIds = new Set(lessons.map((l) => l.staffId));
+    const unscheduledSubjects = new Set(unscheduled.map((u) => u.subjectId));
+    const teachersNeeded = usedTeacherIds.size + unscheduledSubjects.size;
+
+    return {
+      lessons,
+      unscheduled,
+      conflicts: detectedConflicts,
+      roomsNeeded,
+      teachersNeeded,
+    };
+  }
+
+  return { generateSchedules, forecastSchedule };
 }
 
 const schedulesService = createSchedulesService({
   groupsService: { list: () => groupsModule.groupsService.list() },
   subjectsService: { list: () => subjectsModule.subjectsService.getAll() },
   staffService: { list: () => staffModule.staffService.getAll() },
+  childrenService: { list: () => childrenModule.childrenService.list() },
   lessonsRepository: lessonsModule.lessonsRepository ?? lessonsModule,
 });
 
 export const generateSchedules = (args) =>
   schedulesService.generateSchedules(args);
+
+export const forecastSchedule = (args) =>
+  schedulesService.forecastSchedule(args);
