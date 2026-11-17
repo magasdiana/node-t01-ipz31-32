@@ -183,3 +183,30 @@ test('GET /reports/forecast-profit: Parent отримує 403', async () => {
     assert.equal(res.status, 403);
   });
 });
+
+test('GET /reports/forecast-profit: невалідні параметри повертають 400', async () => {
+  const invalidQueries = [
+    'groups=0&children=20&months=3',
+    'groups=51&children=20&months=3',
+    'groups=1&children=-1&months=3',
+    'groups=2&children=1,a&months=3',
+    'groups=2&children=20,20&months=13',
+  ];
+
+  await withServer(async base => {
+    for (const query of invalidQueries) {
+      const res = await fetch(
+        `${base}/reports/forecast-profit?${query}`,
+        {
+          headers: authHeaders('admin'),
+        }
+      );
+
+      assert.equal(
+        res.status,
+        400,
+        `Очікувався статус 400 для параметрів: ${query}`
+      );
+    }
+  });
+});
