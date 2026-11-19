@@ -231,7 +231,7 @@ export const childrenService = {
     return childDto(row);
   },
 
-  // Видалити дитину
+   // Видалити дитину
   async remove(id) {
     try {
       await withRequestContext(async (tx) => {
@@ -241,6 +241,16 @@ export const childrenService = {
 
         if (!existing) {
           throw new NotFoundError("Дитину не знайдено");
+        }
+
+        const paymentsCount = await tx.payment.count({
+          where: { childId: id },
+        });
+
+        if (paymentsCount > 0) {
+          throw new ConflictError(
+            "Не можна видалити дитину, для якої збережена історія платежів",
+          );
         }
 
         await tx.child.delete({
