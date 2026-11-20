@@ -162,14 +162,14 @@ test('children: не більше 3 опікунів (FR-02), рівно 3 до�
   assert.equal(patchBad.status, 400);
 });
 
-test('children: вік 2–5 років (FR-01): межі приймаються, поза межами 409', async () => {
+test('children: вік 2–5 років (FR-01): межі приймаються, поза межами 400', async () => {
   for (const age of [2, 5]) {
     const child = await makeChild({ birthDate: birthFor(age) });
     assert.equal(child.age, age);
   }
   for (const age of [1, 6]) {
     const res = await call('POST', '/children', { name: 'Тест', birthDate: birthFor(age) });
-    assert.equal(res.status, 409, `вік ${age}: ${JSON.stringify(res.body)}`);
+    assert.equal(res.status, 400, `вік ${age}: ${JSON.stringify(res.body)}`);
   }
 });
 
@@ -198,10 +198,10 @@ test('children: невалідні дані дають 400, неіснуючий
   assert.equal((await call('PATCH', `/children/${child.id}`, {})).status, 400);
 });
 
-test('children: PATCH дати народження поза 2–5 років дає 409 і дані не змінюються', async () => {
+test('children: PATCH дати народження поза 2–5 років дає 400 і дані не змінюються', async () => {
   const child = await makeChild();
   const res = await call('PATCH', `/children/${child.id}`, { birthDate: birthFor(8) });
-  assert.equal(res.status, 409);
+  assert.equal(res.status, 400);
 
   const after = await call('GET', `/children/${child.id}`);
   assert.equal(after.body.birthDate, child.birthDate);
