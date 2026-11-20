@@ -204,6 +204,7 @@ function routes() {
 
     ['GET', '/history', ACCESS.HISTORY],
     ['GET', '/history/state', ACCESS.HISTORY],
+    ['GET', `/history/entity/child/${c}`, ACCESS.HISTORY],
     ['GET', '/history/1', ACCESS.HISTORY],
 
     ['GET', '/users', ACCESS.USERS],
@@ -235,6 +236,7 @@ test('матриця ролей: без токена захищені маршр
     ['GET', '/staff'],
     ['GET', '/reports/profit'],
     ['GET', '/history'],
+    ['GET', `/history/entity/child/${ids.ownChild}`],
     ['PATCH', `/lessons/${ids.ownLesson}`],
   ]) {
     const res = await call(method, path);

@@ -11,6 +11,10 @@ import {
 } from "../src/modules/history/history.routes.js";
 import { notFound, errorHandler } from "../src/middleware/errorHandler.js";
 import { NotFoundError } from "../src/lib/errors.js";
+import { authenticate } from "../src/middleware/auth.js";
+import { requestContextMiddleware } from "../src/lib/requestContext.js";
+import { signToken } from "../src/lib/jwt.js";
+import { ROLES } from "../src/config/roles.js";
 
 
 const entry = (id, entity, entityId, action, createdAt) => ({
@@ -80,7 +84,7 @@ const exists = (kind, ids) => async (id) => {
   if (!ids.includes(id)) throw new NotFoundError(`${kind} не знайдено`);
 };
 
-function makeApp() {
+function makeApp({ requireAuth = false } = {}) {
   const service = createHistoryService({
     historyRepository: fakeRepository,
     entityChecks: {
@@ -92,6 +96,10 @@ function makeApp() {
 
   const app = express();
   app.use(express.json());
+  if (requireAuth) {
+  app.use(requestContextMiddleware);
+  app.use(authenticate);
+}
   app.use("/history", createHistoryRouter(controller));
   app.use("/children", createEntityHistoryRouter(controller, "child"));
   app.use("/groups", createEntityHistoryRouter(controller, "group"));
@@ -100,8 +108,8 @@ function makeApp() {
   return app;
 }
 
-async function call(path, options) {
-  const server = makeApp().listen(0);
+async function call(path, options, { requireAuth = false } = {}) {
+  const server = makeApp({ requireAuth }).listen(0);
   await once(server, "listening");
   try {
     const res = await fetch(
@@ -338,4 +346,65 @@ test("Універсальна історія: некоректний діапа
   );
 
   assert.equal(r.status, 400);
+});
+
+test("History: доступ лише Admin із JWT", async () => {
+  const previousAuth = process.env.AUTH_ENABLED;
+  const previousSecret = process.env.JWT_SECRET;
+
+  try {
+    process.env.AUTH_ENABLED = "true";
+    process.env.JWT_SECRET = "history-test-secret-2026-long";
+
+    const paths = [
+  "/history",
+  "/history/1",
+  "/children/1/history",
+  "/groups/1/history",
+  "/history/entity/child/1",
+  "/history/state?entity=child&entityId=1&at=2026-10-02T00:00:00.000Z",
+];
+
+    for (const path of paths) {
+      const anonymous = await call(
+        path,
+        undefined,
+        { requireAuth: true },
+      );
+
+      assert.equal(anonymous.status, 401, path);
+
+      for (const role of Object.values(ROLES)) {
+        const token = signToken({ id: 99, role });
+
+        const response = await call(
+          path,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+          { requireAuth: true },
+        );
+
+        assert.equal(
+          response.status,
+          role === ROLES.ADMIN ? 200 : 403,
+          `${role}: ${path}`,
+        );
+      }
+    }
+  } finally {
+    if (previousAuth === undefined) {
+      delete process.env.AUTH_ENABLED;
+    } else {
+      process.env.AUTH_ENABLED = previousAuth;
+    }
+
+    if (previousSecret === undefined) {
+      delete process.env.JWT_SECRET;
+    } else {
+      process.env.JWT_SECRET = previousSecret;
+    }
+  }
 });
