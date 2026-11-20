@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
-    "test": "node --import ./tests/setup.env.js --test",
+    "test": "node --import ./tests/setup.env.js --test --test-concurrency=1",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node prisma/seed.js",
