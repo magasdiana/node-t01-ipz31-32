@@ -81,7 +81,17 @@ export const roomsService = {
       );
     }
 
-    await roomsRepository.delete(id);
+    try {
+      await roomsRepository.delete(id);
+    } catch (error) {
+      if (error.code === "P2003") {
+        throw new ConflictError(
+          "Не можна видалити кімнату, яка призначена групі",
+        );
+      }
+
+      throw error;
+    }
 
     return { message: "Кімнату видалено" };
   },

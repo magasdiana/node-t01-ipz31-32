@@ -37,7 +37,6 @@ const roomsDocs = {
         responses: {
           201: { description: "Приміщення створено" },
           400: { description: "Некоректні дані" },
-          409: { description: "Порушено бізнес-правила" },
         },
       },
     },
@@ -101,7 +100,7 @@ const roomsDocs = {
           },
         ],
         responses: {
-          204: { description: "Приміщення видалено" },
+          200: { description: "Приміщення видалено" },
           404: { description: "Приміщення не знайдено" },
           409: { description: "Приміщення використовується групою" },
         },

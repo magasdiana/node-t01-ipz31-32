@@ -60,6 +60,11 @@ export const groupsRepository = {
       where: { groupId: id },
     });
   },
+  
+  // Кількість співробітників, прив'язаних до групи
+  countStaff(id) {
+    return prisma.staff.count({ where: { groupId: id } });
+  }, 
 
   // Перевірити зайнятість кімнати
   findRoom(roomId, excludeGroupId = null) {

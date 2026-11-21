@@ -33,6 +33,7 @@ const groupsDocs = {
         responses: {
           201: { description: "Групу створено" },
           400: { description: "Некоректні дані" },
+          404: { description: "Кімнату не знайдено" },
           409: { description: "Порушено бізнес-правила" },
         },
       },
@@ -84,7 +85,7 @@ const groupsDocs = {
         responses: {
           200: { description: "Групу оновлено" },
           400: { description: "Некоректні дані" },
-          404: { description: "Групу не знайдено" },
+          404: { description: "Групу або кімнату не знайдено" },
           409: { description: "Порушено бізнес-правила" },
         },
       },
@@ -100,9 +101,9 @@ const groupsDocs = {
           },
         ],
         responses: {
-          204: { description: "Групу видалено" },
+          200: { description: "Групу видалено" },
           404: { description: "Групу не знайдено" },
-          409: { description: "Групу не можна видалити" },
+          409: { description: "Групу не можна видалити: є діти або персонал" },
         },
       },
     },
