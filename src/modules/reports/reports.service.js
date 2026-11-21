@@ -56,6 +56,7 @@ function revenueForMonth(payments, month) {
 
   for (const payment of payments) {
     const share = paymentShareForMonth(payment, month);
+
     total += share.total;
     meals += share.meals;
   }
@@ -86,6 +87,7 @@ function sharedCosts(staff) {
 function roundReport(report) {
   return {
     ...report,
+
     revenue: round2(report.revenue),
     tuitionRevenue: round2(report.tuitionRevenue),
     mealsRevenue: round2(report.mealsRevenue),
@@ -103,6 +105,7 @@ function roundReport(report) {
 
 function scenarioSizes(query, allGroups, allChildren) {
   const { groups, children } = query;
+
   const count = groups ?? allGroups.length;
 
   if (
@@ -149,7 +152,9 @@ function scenarioSizes(query, allGroups, allChildren) {
     const total = Number(children);
 
     if (!Number.isSafeInteger(total)) {
-      throw new RangeError('Некоректна кількість дітей');
+      throw new RangeError(
+        'Некоректна кількість дітей'
+      );
     }
 
     sizes = Array.from(
@@ -178,144 +183,163 @@ function scenarioSizes(query, allGroups, allChildren) {
 
 export const reportsService = {
 
-async getForecastProfit(query = {}) {
-  const [groups, children, settings] = await Promise.all([
-    reportsRepository.getGroupsWithChildrenCount(),
-    reportsRepository.getForecastChildren(),
-    reportsRepository.getForecastPrices(),
-  ]);
+  async getForecastProfit(query = {}) {
+    const [groups, children, settings] = await Promise.all([
+      reportsRepository.getGroupsWithChildrenCount(),
+      reportsRepository.getForecastChildren(),
+      reportsRepository.getForecastPrices(),
+    ]);
 
-const orderedGroups = [...groups].sort(
-  (a, b) => a.id - b.id
-);
-
-const sizes = scenarioSizes(
-  query,
-  orderedGroups,
-  children
-);
-
-  const prices = {
-    ...DEFAULT_PRICES,
-    ...(settings?.data ?? {}),
-
-    mealsPerDayByAge: {
-      ...DEFAULT_PRICES.mealsPerDayByAge,
-      ...(settings?.data?.mealsPerDayByAge ?? {}),
-    },
-
-    benefitPercent: {
-      ...DEFAULT_PRICES.benefitPercent,
-      ...(settings?.data?.benefitPercent ?? {}),
-    },
-  };
-
-  const { ageInYears } = await import('../../lib/age.js');
-
-const sortedGroups = orderedGroups;
-
-  const sortedChildren = [...children].sort((a, b) => {
-    const aGroupIndex = sortedGroups.findIndex(
-      group => group.id === a.groupId
+    const orderedGroups = [...groups].sort(
+      (a, b) => a.id - b.id
     );
 
-    const bGroupIndex = sortedGroups.findIndex(
-      group => group.id === b.groupId
+    const sizes = scenarioSizes(
+      query,
+      orderedGroups,
+      children
     );
 
-    const aIndex =
-      aGroupIndex === -1
-        ? sortedGroups.length
-        : aGroupIndex;
+    const prices = {
+      ...DEFAULT_PRICES,
+      ...(settings?.data ?? {}),
 
-    const bIndex =
-      bGroupIndex === -1
-        ? sortedGroups.length
-        : bGroupIndex;
+      mealsPerDayByAge: {
+        ...DEFAULT_PRICES.mealsPerDayByAge,
+        ...(settings?.data?.mealsPerDayByAge ?? {}),
+      },
 
-    return aIndex - bIndex || a.id - b.id;
-  });
+      benefitPercent: {
+        ...DEFAULT_PRICES.benefitPercent,
+        ...(settings?.data?.benefitPercent ?? {}),
+      },
+    };
 
-  const toProfile = child => ({
-    age: child.data?.birthDate
-      ? ageInYears(child.data.birthDate)
-      : 3,
+    const { ageInYears } = await import('../../lib/age.js');
 
-    benefitType:
-      child.data?.benefitType ?? 'none',
-  });
+    const sortedGroups = orderedGroups;
 
-  const existingSizes = sortedGroups.map(group =>
-    children.filter(
-      child => child.groupId === group.id
-    ).length
-  );
+    const sortedChildren = [...children].sort((a, b) => {
+      const aGroupIndex = sortedGroups.findIndex(
+        group => group.id === a.groupId
+      );
 
-  const sameDistribution =
-    sizes.length === existingSizes.length &&
-    sizes.every(
-      (size, index) => size === existingSizes[index]
-    );
+      const bGroupIndex = sortedGroups.findIndex(
+        group => group.id === b.groupId
+      );
 
-  let profiles;
+      const aIndex =
+        aGroupIndex === -1
+          ? sortedGroups.length
+          : aGroupIndex;
 
-  if (sameDistribution) {
-    profiles = sortedGroups.map(group =>
-      sortedChildren
-        .filter(child => child.groupId === group.id)
-        .map(toProfile)
-    );
-  } else {
-    const availableProfiles =
-      sortedChildren.map(toProfile);
+      const bIndex =
+        bGroupIndex === -1
+          ? sortedGroups.length
+          : bGroupIndex;
 
-    let offset = 0;
-
-    profiles = sizes.map(size => {
-      const groupProfiles =
-        availableProfiles.slice(
-          offset,
-          offset + size
-        );
-
-      offset += size;
-
-      return groupProfiles;
+      return aIndex - bIndex || a.id - b.id;
     });
-  }
 
-  const forecastMonths = query.months ?? 3;
+    // Підтримка актуального та старого форматів пільг.
+    // Для VIP-родичів застосовується максимальна пільга,
+    // якщо benefitType не встановлено явно.
+    const toProfile = child => {
+      const data = child.data ?? {};
 
-  const result = calculateForecast({
-    groupSizes: sizes,
-    profiles,
-    prices,
-    months: forecastMonths,
+      const relativeVip =
+        data.relativeVip ?? Boolean(data.relative);
 
-    fixedCosts: MIN_ROOMS_FIXED_COSTS,
-    roomCost: ROOM.ROOM_COST_DEFAULT,
+      const legacyBenefits = {
+        NONE: 'none',
+        LEVEL_1: 'min',
+        LEVEL_2: 'medium',
+        LEVEL_3: 'max',
+      };
 
-    educatorSalary: SALARY.EDUCATOR_BASE,
-    assistantSalary: SALARY.ASSISTANT_BASE,
+      return {
+        age: data.birthDate
+          ? ageInYears(data.birthDate)
+          : 3,
 
-    bonusRules: GROUP_BONUS_RULES,
+        benefitType:
+          data.benefitType ??
+          (relativeVip
+            ? 'max'
+            : legacyBenefits[data.benefit] ?? 'none'),
+      };
+    };
 
-    workingDays:
-      ASSUMPTIONS.A1_WORKING_DAYS_PER_MONTH,
+    const existingSizes = sortedGroups.map(group =>
+      children.filter(
+        child => child.groupId === group.id
+      ).length
+    );
 
-    maxRooms: REPORTS.MAX_ROOMS_SEARCH,
-  });
+    const sameDistribution =
+      sizes.length === existingSizes.length &&
+      sizes.every(
+        (size, index) => size === existingSizes[index]
+      );
 
-  return {
-    scenario: {
-      groups: sizes.length,
-      children: sizes,
+    let profiles;
+
+    if (sameDistribution) {
+      profiles = sortedGroups.map(group =>
+        sortedChildren
+          .filter(child => child.groupId === group.id)
+          .map(toProfile)
+      );
+    } else {
+      const availableProfiles =
+        sortedChildren.map(toProfile);
+
+      let offset = 0;
+
+      profiles = sizes.map(size => {
+        const groupProfiles =
+          availableProfiles.slice(
+            offset,
+            offset + size
+          );
+
+        offset += size;
+
+        return groupProfiles;
+      });
+    }
+
+    const forecastMonths = query.months ?? 3;
+
+    const result = calculateForecast({
+      groupSizes: sizes,
+      profiles,
+      prices,
       months: forecastMonths,
-    },
-    ...result,
-  };
-},
 
+      fixedCosts: MIN_ROOMS_FIXED_COSTS,
+      roomCost: ROOM.ROOM_COST_DEFAULT,
+
+      educatorSalary: SALARY.EDUCATOR_BASE,
+      assistantSalary: SALARY.ASSISTANT_BASE,
+
+      bonusRules: GROUP_BONUS_RULES,
+
+      workingDays:
+        ASSUMPTIONS.A1_WORKING_DAYS_PER_MONTH,
+
+      maxRooms: REPORTS.MAX_ROOMS_SEARCH,
+    });
+
+    return {
+      scenario: {
+        groups: sizes.length,
+        children: sizes,
+        months: forecastMonths,
+      },
+      ...result,
+    };
+  },
 
   async getProfit({ month, groupId } = {}) {
     const targetMonth = month ?? currentMonth();
@@ -340,7 +364,9 @@ const sortedGroups = orderedGroups;
       );
 
       if (!found) {
-        throw new NotFoundError('Групу не знайдено');
+        throw new NotFoundError(
+          'Групу не знайдено'
+        );
       }
 
       groups = [found];
@@ -390,7 +416,9 @@ const sortedGroups = orderedGroups;
 
       return roundReport({
         groupId: group.id,
+
         name: group.data?.name ?? null,
+
         children,
 
         tuitionRevenue:
@@ -417,6 +445,7 @@ const sortedGroups = orderedGroups;
     }
 
     const shared = sharedCosts(staff);
+
     const revenue = revenueForMonth(
       payments,
       targetMonth
@@ -456,6 +485,7 @@ const sortedGroups = orderedGroups;
 
     return {
       month: targetMonth,
+
       ...overall,
 
       shared: {

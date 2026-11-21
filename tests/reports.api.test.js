@@ -210,3 +210,67 @@ test('GET /reports/forecast-profit: невалідні параметри пов
     }
   });
 });
+// Week 7: перевірка валідації звіту про прибуток
+
+test('GET /reports/profit: невалідні параметри повертають 400', async () => {
+  const invalidQueries = [
+    'month=2026-13',
+    'month=2026-00',
+    'month=invalid',
+    'groupId=0',
+    'groupId=-1',
+    'groupId=abc',
+    'groupId=1.5',
+  ];
+
+  await withServer(async base => {
+    for (const query of invalidQueries) {
+      const res = await fetch(
+        `${base}/reports/profit?${query}`,
+        {
+          headers: authHeaders('admin'),
+        }
+      );
+
+      assert.equal(res.status, 400, query);
+    }
+  });
+});
+
+// Week 7: регресійна перевірка BUG-005
+
+test('GET /reports/profit: арифметична узгодженість витрат', async () => {
+  await withServer(async base => {
+    const res = await fetch(
+      `${base}/reports/profit?month=2026-11`,
+      {
+        headers: authHeaders('admin'),
+      }
+    );
+
+    assert.equal(res.status, 200);
+
+    const data = await res.json();
+
+    for (const report of [data, ...data.groups]) {
+      const expensesSum = Object.values(report.expenses)
+        .reduce((sum, value) => sum + value, 0);
+
+      assert.ok(
+        Math.abs(report.totalExpenses - expensesSum) < 0.011
+      );
+
+      assert.ok(
+        Math.abs(
+          report.profit -
+          (report.revenue - report.totalExpenses)
+        ) < 0.011
+      );
+
+      assert.equal(
+        report.mealsRevenue,
+        report.expenses.meals
+      );
+    }
+  });
+});
