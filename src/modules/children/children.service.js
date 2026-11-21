@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 import { withRequestContext } from "../../lib/requestContextTransaction.js";
 import { ageInYears } from "../../lib/age.js";
 import { LIMITS } from "../../config/constants.js";
-import { ConflictError, NotFoundError } from "../../lib/errors.js";
+import { BadRequestError, ConflictError, NotFoundError } from "../../lib/errors.js";
 
 // Обчислення віку за датою народження
 function getAge(birthDate) {
@@ -14,7 +14,7 @@ function assertChildAge(birthDate) {
   const age = getAge(birthDate);
 
   if (age < LIMITS.CHILD_AGE_MIN || age > LIMITS.CHILD_AGE_MAX) {
-    throw new ConflictError(
+    throw new BadRequestError(
       `Вік дитини має бути від ${LIMITS.CHILD_AGE_MIN} до ${LIMITS.CHILD_AGE_MAX} років`,
     );
   }
@@ -231,7 +231,7 @@ export const childrenService = {
     return childDto(row);
   },
 
-  // Видалити дитину
+   // Видалити дитину
   async remove(id) {
     try {
       await withRequestContext(async (tx) => {
@@ -241,6 +241,16 @@ export const childrenService = {
 
         if (!existing) {
           throw new NotFoundError("Дитину не знайдено");
+        }
+
+        const paymentsCount = await tx.payment.count({
+          where: { childId: id },
+        });
+
+        if (paymentsCount > 0) {
+          throw new ConflictError(
+            "Не можна видалити дитину, для якої збережена історія платежів",
+          );
         }
 
         await tx.child.delete({
