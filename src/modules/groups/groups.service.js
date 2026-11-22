@@ -103,6 +103,15 @@ export const groupsService = {
       );
     }
 
+    // Ліміт не може бути меншим за поточну кількість дітей
+    const childrenCount = existing._count?.children ?? 0;
+
+    if (input.limit !== undefined && input.limit < childrenCount) {
+      throw new ConflictError(
+        `Не можна встановити ліміт ${input.limit}: у групі вже ${childrenCount} дітей`,
+      );
+    }
+
     // Бізнес-правило: перевірка віку дітей у групі
     if (nextData.age !== undefined && nextData.age !== existing.data.age) {
       const children = await groupsRepository.getChildren(id);
@@ -142,6 +151,15 @@ export const groupsService = {
 
     if (!existing) {
       throw new NotFoundError("Групу не знайдено");
+    }
+
+    const childrenCount = existing._count?.children ?? 0;
+    const staffCount = await groupsRepository.countStaff(id);
+
+    if (childrenCount > 0 || staffCount > 0) {
+      throw new ConflictError(
+        "Не можна видалити групу, до якої прив'язані діти або персонал",
+      );
     }
 
     try {
