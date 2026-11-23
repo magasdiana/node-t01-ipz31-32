@@ -503,6 +503,7 @@ FR-36. Admin може переглянути історію з фільтрам�
 | `GET/POST /subjects`                                    | гуртки                                                                                 | Admin                        |
 | `GET /groups/{id}/lessons`, `PATCH /lessons/{id}`       | розклад групи, правка                                                                  | Admin, Teacher; Parent читає |
 | `POST /schedules`                                       | згенерувати чернетку                                                                   | Admin                        |
+| `GET /schedules/forecast` | прогноз розкладу | Admin |
 | `GET/POST /payments`                                    | історія оплат                                                                          | Admin, Manager; Parent свої  |
 | `GET /reports/profit`                                   | прибуток (`?groupId=`)                                                                 | Admin                        |
 | `GET /reports/min-rooms`                                | мінімальна окупна кількість кімнат                                                     | Admin                        |
