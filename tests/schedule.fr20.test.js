@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 import { generateSchedule } from "../src/modules/schedules/schedules.generator.js";
-import { intervalsOverlap } from "../src/lib/time.js";
+import { intervalsOverlap, toMinutes } from "../src/lib/time.js";
 
 describe("QA Schedule FR-20 Validation", () => {
     // Тестовий контекст: 3 групи, 5 гуртків, достатня кількість викладачів
@@ -76,6 +76,11 @@ describe("QA Schedule FR-20 Validation", () => {
     });
 
     it("FR-20: no schedule overlaps for teachers, groups, or rooms", () => {
+        // Заняття мають поля staffId / start / duration (а не teacherId / startTime / endTime),
+        // тож час переводимо в хвилини, інакше перевірка накладок нічого не перевіряє
+        const roomOf = new Map(groups.map((g) => [g.id, g.roomId]));
+        let overlapsChecked = 0;
+
         for (let i = 0; i < lessons.length; i += 1) {
             for (let j = i + 1; j < lessons.length; j += 1) {
                 const l1 = lessons[i];
@@ -83,31 +88,31 @@ describe("QA Schedule FR-20 Validation", () => {
 
                 if (l1.day !== l2.day) continue;
 
-                const overlaps = intervalsOverlap(
-                    l1.startTime,
-                    l1.endTime,
-                    l2.startTime,
-                    l2.endTime
-                );
+                const s1 = toMinutes(l1.start);
+                const s2 = toMinutes(l2.start);
 
-                if (overlaps) {
-                    assert.notStrictEqual(
-                        l1.teacherId,
-                        l2.teacherId,
-                        `Teacher conflict on day ${l1.day}: teacher ${l1.teacherId} in lessons ${l1.id} & ${l2.id}`
-                    );
-                    assert.notStrictEqual(
-                        l1.groupId,
-                        l2.groupId,
-                        `Group conflict on day ${l1.day}: group ${l1.groupId} has simultaneous lessons ${l1.id} & ${l2.id}`
-                    );
-                    assert.notStrictEqual(
-                        l1.roomId,
-                        l2.roomId,
-                        `Room conflict on day ${l1.day}: room ${l1.roomId} is double-booked in lessons ${l1.id} & ${l2.id}`
-                    );
-                }
+                if (!intervalsOverlap(s1, s1 + l1.duration, s2, s2 + l2.duration)) continue;
+
+                overlapsChecked += 1;
+                assert.notStrictEqual(
+                    l1.staffId,
+                    l2.staffId,
+                    `Teacher conflict on day ${l1.day}: teacher ${l1.staffId} at ${l1.start}`
+                );
+                assert.notStrictEqual(
+                    l1.groupId,
+                    l2.groupId,
+                    `Group conflict on day ${l1.day}: group ${l1.groupId} at ${l1.start}`
+                );
+                assert.notStrictEqual(
+                    roomOf.get(l1.groupId),
+                    roomOf.get(l2.groupId),
+                    `Room conflict on day ${l1.day}: room ${roomOf.get(l1.groupId)} at ${l1.start}`
+                );
             }
         }
+
+        // Заняття різних груп справді йдуть паралельно, тож перевірка не порожня
+        assert.ok(overlapsChecked > 0, "у розкладі немає жодного одночасного заняття, перевірка нічого не охоплює");
     });
 });

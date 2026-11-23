@@ -2,6 +2,18 @@ import { SCHEDULE } from "../../config/constants.js";
 import { findConflicts } from "../lessons/lessons.rules.js";
 import { toMinutes, intervalsOverlap } from "../../lib/time.js";
 
+// Коди причин, з яких заняття не вдалося розставити (поле unscheduled[].code)
+export const UNSCHEDULED_CODES = Object.freeze({
+  NO_TEACHER: "NO_TEACHER", // жоден викладач не веде цей гурток
+  NO_SLOT: "NO_SLOT", // є викладачі, але немає вільного часу
+});
+
+const REASONS = {
+  [UNSCHEDULED_CODES.NO_TEACHER]: "Немає викладача, який веде цей гурток",
+  [UNSCHEDULED_CODES.NO_SLOT]:
+    "Немає вільного часу без накладок і з урахуванням ліміту занять на день",
+};
+
 function toTime(minutes) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
@@ -10,7 +22,7 @@ function toTime(minutes) {
 
 // Початки занять за один день: кроком LESSON_MINUTES у вікні перебування,
 // без тих, що перетинаються з харчуванням або сном (FR-17, FR-18)
-function buildDaySlots(config) {
+export function buildDaySlots(config) {
   const dayStart = toMinutes(config.DAY_START);
   const dayEnd = dayStart + config.STAY_HOURS * 60;
 
@@ -32,10 +44,30 @@ function buildDaySlots(config) {
   return starts;
 }
 
+// Збережені заняття можуть мати день числом (1-5, як у БД) або рядком ("mon")
+function normalizeDay(day, config) {
+  return typeof day === "number" ? (config.DAYS[day - 1] ?? day) : day;
+}
+
+/**
+ * Генерує тижневий розклад.
+ *
+ * @param {object}   input
+ * @param {Array}    input.groups        групи, для яких будуємо розклад: { id, roomId }
+ * @param {Array}    input.subjects      гуртки: { id }
+ * @param {Array}    input.teachers      викладачі: { id, subjectIds }
+ * @param {Array}    input.busyLessons   заняття, які вже існують (наприклад, груп, що
+ *                                       лишаються): генератор планує навколо них, щоб
+ *                                       не створити накладок за викладачем чи кімнатою.
+ *                                       Формат: { groupId, staffId, roomId, day, start, duration }
+ * @param {object}   input.config        перевизначення констант SCHEDULE
+ * @returns {{ lessons: Array, unscheduled: Array }}
+ */
 export function generateSchedule({
   groups = [],
   subjects = [],
   teachers = [],
+  busyLessons = [],
   config: overrides = {},
 }) {
   // Переданий config може містити лише частину полів; решту беремо з SCHEDULE
@@ -44,6 +76,11 @@ export function generateSchedule({
   const lessons = [];
   const unscheduled = [];
   const groupLessonsCount = new Map();
+
+  const busy = busyLessons.map((lesson) => ({
+    ...lesson,
+    day: normalizeDay(lesson.day, config),
+  }));
 
   const daySlots = buildDaySlots(config);
   const slots = config.DAYS.flatMap((day) =>
@@ -54,31 +91,45 @@ export function generateSchedule({
     })),
   );
 
+  const maxPerDay = config.MAX_SUBJECT_LESSONS_PER_DAY;
+  const required = config.LESSONS_PER_SUBJECT_PER_WEEK ?? 1;
+
   for (const group of groups) {
     for (const subject of subjects) {
-      const required = config.LESSONS_PER_SUBJECT_PER_WEEK ?? 1;
+      const availableTeachers = teachers.filter((teacher) =>
+        teacher.subjectIds?.includes(subject.id),
+      );
 
       for (let occurrence = 0; occurrence < required; occurrence += 1) {
-        const availableTeachers = teachers.filter((teacher) =>
-          teacher.subjectIds?.includes(subject.id),
-        );
-
         if (availableTeachers.length === 0) {
           unscheduled.push({
             groupId: group.id,
             subjectId: subject.id,
-            reason: "No teacher available for this subject",
+            code: UNSCHEDULED_CODES.NO_TEACHER,
+            reason: REASONS[UNSCHEDULED_CODES.NO_TEACHER],
           });
           continue;
         }
 
+        // Спершу дні, у яких група має найменше занять: гуртки розподіляються
+        // рівномірно за тижнем (FR-20). Сортування стабільне, тож у межах
+        // дня порядок слотів лишається за часом.
+        const orderedSlots = [...slots].sort(
+          (a, b) =>
+            (groupLessonsCount.get(`${group.id}:${a.day}`) ?? 0) -
+            (groupLessonsCount.get(`${group.id}:${b.day}`) ?? 0),
+        );
+
+        const known = [...busy, ...lessons];
+        const blockedBy = new Set();
         let scheduled = false;
 
-        for (const slot of slots) {
+        for (const slot of orderedSlots) {
           const dailyKey = `${group.id}:${slot.day}`;
           const dailyCount = groupLessonsCount.get(dailyKey) ?? 0;
 
-          if (dailyCount >= config.MAX_SUBJECT_LESSONS_PER_DAY) {
+          if (dailyCount >= maxPerDay) {
+            blockedBy.add("daily_limit");
             continue;
           }
 
@@ -94,12 +145,12 @@ export function generateSchedule({
 
           const teacher = availableTeachers.find((candidate) => {
             candidateLesson.staffId = candidate.id;
-            return findConflicts(candidateLesson, lessons, groups).length === 0;
+            const found = findConflicts(candidateLesson, known, groups);
+            found.forEach((c) => blockedBy.add(c.type));
+            return found.length === 0;
           });
 
-          if (!teacher) {
-            continue;
-          }
+          if (!teacher) continue;
 
           lessons.push({
             groupId: group.id,
@@ -111,7 +162,6 @@ export function generateSchedule({
           });
 
           groupLessonsCount.set(dailyKey, dailyCount + 1);
-          
           scheduled = true;
           break;
         }
@@ -120,7 +170,10 @@ export function generateSchedule({
           unscheduled.push({
             groupId: group.id,
             subjectId: subject.id,
-            reason: "No suitable time slot available",
+            code: UNSCHEDULED_CODES.NO_SLOT,
+            reason: REASONS[UNSCHEDULED_CODES.NO_SLOT],
+            // що саме блокувало: teacher, group, room, daily_limit
+            blockedBy: [...blockedBy].sort(),
           });
         }
       }

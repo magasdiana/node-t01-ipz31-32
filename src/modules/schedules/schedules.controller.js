@@ -1,4 +1,5 @@
 import { asyncHandler } from "../../lib/asyncHandler.js";
+import { BadRequestError } from "../../lib/errors.js";
 import * as schedulesService from "./schedules.service.js";
 
 export const generate = asyncHandler(async (req, res) => {
@@ -8,21 +9,16 @@ export const generate = asyncHandler(async (req, res) => {
   res.status(result.saved ? 201 : 200).json(result);
 });
 
-export const forecast = asyncHandler(async (req, res, next) => {
+export const forecast = asyncHandler(async (req, res) => {
+  const query = req.validated?.query ?? req.query;
+
   try {
-    const query = req.validated?.query ?? req.query;
     const result = await schedulesService.forecastSchedule(query);
     res.status(200).json(result);
   } catch (error) {
-    if (error instanceof RangeError) {
-      return res.status(400).json({
-        error: {
-          status: 400,
-          message: error.message,
-          details: null,
-        },
-      });
-    }
-    next(error);
+    // Некоректний сценарій (наприклад, 21 дитина в групі) -> 400 у тому самому
+    // форматі { error: { status, message } }, що й в інших помилок API
+    if (error instanceof RangeError) throw new BadRequestError(error.message);
+    throw error;
   }
 });

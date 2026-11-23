@@ -17,6 +17,30 @@ const errorResponse = (description) => ({
   content: { "application/json": { schema: errorBody } },
 });
 
+const unscheduledItem = {
+  type: "object",
+  properties: {
+    groupId: { type: "integer", example: 1 },
+    subjectId: { type: "integer", example: 3 },
+    code: {
+      type: "string",
+      enum: ["NO_TEACHER", "NO_SLOT"],
+      description:
+        "NO_TEACHER: гурток не веде жоден викладач. NO_SLOT: немає вільного часу",
+    },
+    reason: { type: "string", description: "Причина для людини" },
+    blockedBy: {
+      type: "array",
+      description:
+        "Лише для NO_SLOT: що блокувало розстановку (teacher, group, room, daily_limit)",
+      items: {
+        type: "string",
+        enum: ["teacher", "group", "room", "daily_limit"],
+      },
+    },
+  },
+};
+
 const scheduledLesson = {
   type: "object",
   properties: {
@@ -52,14 +76,7 @@ const scheduleResponse = {
       type: "array",
       description:
         "Заняття, які не вдалося розставити. Порожній, якщо все розставлено",
-      items: {
-        type: "object",
-        properties: {
-          groupId: { type: "integer" },
-          subjectId: { type: "integer" },
-          reason: { type: "string" },
-        },
-      },
+      items: unscheduledItem,
     },
   },
 };
@@ -75,14 +92,7 @@ const forecastScheduleResponse = {
     unscheduled: {
       type: "array",
       description: "Заняття, які не вдалося розмістити в розкладі",
-      items: {
-        type: "object",
-        properties: {
-          groupId: { type: "integer" },
-          subjectId: { type: "integer" },
-          reason: { type: "string" },
-        },
-      },
+      items: unscheduledItem,
     },
     conflicts: {
       type: "array",
@@ -97,7 +107,31 @@ const forecastScheduleResponse = {
     teachersNeeded: {
       type: "integer",
       example: 5,
-      description: "Кількість потрібних викладачів",
+      description:
+        "Викладачі, задіяні в чернетці, плюс по одному на кожен гурток, який не вдалося закрити",
+    },
+    scenario: {
+      type: "object",
+      description: "Сценарій, за яким побудовано прогноз",
+      properties: {
+        totalChildren: { type: "integer", example: 45 },
+        groups: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              groupId: {
+                type: "integer",
+                description: "Від'ємне значення означає віртуальну групу",
+                example: 1,
+              },
+              roomId: { type: "integer", nullable: true, example: 11 },
+              childrenCount: { type: "integer", example: 15 },
+              isVirtual: { type: "boolean", example: false },
+            },
+          },
+        },
+      },
     },
   },
 };
@@ -111,7 +145,11 @@ export default {
         description:
           "Розставляє гуртки для вибраних груп без накладок викладачів, груп і кімнат. " +
           "Старі заняття цих груп замінюються. Заняття, які не вдалося розставити, " +
-          "повертаються в unscheduled.",
+          "повертаються в unscheduled. Без save (або save = false) повертається лише " +
+          "чернетка (200), із save = true розклад зберігається (201), але лише якщо " +
+          "вдалося розставити всі заняття; інакше 409 і нічого не записується. " +
+          "Заняття груп, які не перегенеровуються, враховуються як зайняті слоти. Лише Admin.",
+        security: [{ bearerAuth: [] }],
         requestBody: {
           required: false,
           content: {
@@ -126,6 +164,13 @@ export default {
                     description:
                       "Для яких груп генерувати. Без поля: для всіх груп",
                     example: [1, 2],
+                  },
+                  save: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                      "true: записати розклад у БД. За замовчуванням false (лише чернетка)",
+                    example: false,
                   },
                 },
               },
@@ -142,8 +187,12 @@ export default {
             content: { "application/json": { schema: scheduleResponse } },
           },
           400: errorResponse("Некоректні дані або помилка валідації"),
+          401: errorResponse("Відсутній або невалідний токен"),
+          403: errorResponse("Недостатньо прав (потрібна роль Admin)"),
           404: errorResponse("Групу не знайдено"),
-          409: errorResponse("Нові заняття накладаються на розклад інших груп"),
+          409: errorResponse(
+            "Немає груп або гуртків, не всі заняття розставлено (save = true) або є накладки з іншими групами",
+          ),
         },
       },
     },
