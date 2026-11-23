@@ -120,28 +120,34 @@ export function createSchedulesService({
   generate = generateSchedule,
   conflicts = findConflicts,
 }) {
-  // Генератор не бачить занять груп, які лишаються. Якщо генеруємо лише частину груп,
-  // перевіряємо, що нові заняття не накладаються на збережені.
-  async function assertNoClashWithKept(lessons, targetGroups, allGroups) {
-    if (typeof lessonsRepository.findByGroupId !== "function") return;
+  // Заняття груп, які лишаються без змін (їх не перегенеровуємо). Генератор планує
+  // навколо них, а перед збереженням ми ще раз перевіряємо відсутність накладок.
+  async function loadKeptLessons(targetGroups, allGroups) {
+    if (typeof lessonsRepository.findByGroupId !== "function") return [];
     const targetIds = new Set(targetGroups.map((g) => g.id));
     const keptGroups = allGroups.filter((g) => !targetIds.has(g.id));
-    if (keptGroups.length === 0) return;
+    if (keptGroups.length === 0) return [];
 
     const roomOf = new Map(allGroups.map((g) => [g.id, g.roomId ?? null]));
-    const groupsForRules = allGroups.map((g) => ({
-      id: g.id,
-      roomId: g.roomId ?? null,
-    }));
-
     const keptRows = (
       await Promise.all(
         keptGroups.map((g) => lessonsRepository.findByGroupId(g.id)),
       )
     ).flat();
-    const kept = keptRows.map((row) => ({
+
+    return keptRows.map((row) => ({
       ...flatten(row),
       roomId: roomOf.get(row.groupId) ?? null,
+    }));
+  }
+
+  function assertNoClashWithKept(lessons, kept, allGroups) {
+    if (kept.length === 0) return;
+
+    const roomOf = new Map(allGroups.map((g) => [g.id, g.roomId ?? null]));
+    const groupsForRules = allGroups.map((g) => ({
+      id: g.id,
+      roomId: g.roomId ?? null,
     }));
 
     const clashes = [];
@@ -174,14 +180,19 @@ export function createSchedulesService({
       .filter((s) => s.position === "teacher")
       .map((s) => ({ id: s.id, subjectIds: s.subjectIds ?? [] }));
 
+    // Заняття груп, що лишаються, передаємо генератору як зайняті слоти:
+    // так часткова перегенерація (groupIds) не дає накладок за викладачем і кімнатою
+    const kept = await loadKeptLessons(targetGroups, allGroups);
+
     const { lessons: generated, unscheduled } = generate({
       groups: targetGroups.map((g) => ({ id: g.id, roomId: g.roomId ?? null })),
       subjects: subjects.map((s) => ({ id: s.id })),
       teachers,
+      busyLessons: kept,
     });
 
     const lessons = generated.map((l) => ({ ...l, day: toDayNumber(l.day) }));
-    await assertNoClashWithKept(lessons, targetGroups, allGroups);
+    assertNoClashWithKept(lessons, kept, allGroups);
 
     // Якщо save не передано або він false — повертаємо лише чернетку
     if (!save) {
@@ -304,12 +315,26 @@ export function createSchedulesService({
     const unscheduledSubjects = new Set(unscheduled.map((u) => u.subjectId));
     const teachersNeeded = usedTeacherIds.size + unscheduledSubjects.size;
 
+    // Сценарій, за яким побудовано прогноз: видно, які групи реальні, а які віртуальні,
+    // і скільки дітей закладено в кожну (кількість дітей не впливає на сітку занять,
+    // але підтверджує вхідні параметри та ліміт 20 дітей у групі)
+    const scenario = {
+      groups: scenarioGroups.map((g) => ({
+        groupId: g.id,
+        roomId: g.roomId > 0 ? g.roomId : null,
+        childrenCount: g.childrenCount,
+        isVirtual: g.isVirtual,
+      })),
+      totalChildren: scenarioGroups.reduce((sum, g) => sum + g.childrenCount, 0),
+    };
+
     return {
       lessons,
       unscheduled,
       conflicts: detectedConflicts,
       roomsNeeded,
       teachersNeeded,
+      scenario,
     };
   }
 
