@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/payments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "childId": "{{childId}}",
+      "period": "month",
+      "periodStart": "2026-10"
+    }
+order: 15000

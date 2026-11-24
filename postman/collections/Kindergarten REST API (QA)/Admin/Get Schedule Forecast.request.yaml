@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/schedules/forecast?groups=8&children=160"
+method: GET
+queryParams:
+  groups: "8"
+  children: "160"
+order: 53000

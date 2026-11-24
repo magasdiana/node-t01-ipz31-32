@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/children"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Manager QA Child",
+      "birthDate": "2023-10-24",
+      "guardians": [
+        "Guardian 1"
+      ]
+    }
+order: 3000

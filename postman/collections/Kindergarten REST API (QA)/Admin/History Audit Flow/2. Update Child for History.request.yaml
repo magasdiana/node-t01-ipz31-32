@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/children/{{hist_child_id}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "History QA Child Updated"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test("Child updated", function () { pm.response.to.have.status(200); });
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test("Child updated", function () { pm.response.to.have.status(200); });
+      pm.collectionVariables.set("historyAt", new Date().toISOString());
+    language: text/javascript
+order: 2000

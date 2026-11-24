@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/rooms/{{roomId}}"
+method: GET
+order: 17000

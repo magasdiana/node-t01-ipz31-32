@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/children"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Parent Forbidden Child",
+      "birthDate": "2023-10-24"
+    }
+order: 11000

@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/children"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Invalid Age Child",
+      "birthDate": "2020-10-24",
+      "guardians": []
+    }
+order: 5000

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/reports/min-rooms"
+method: GET
+order: 51000

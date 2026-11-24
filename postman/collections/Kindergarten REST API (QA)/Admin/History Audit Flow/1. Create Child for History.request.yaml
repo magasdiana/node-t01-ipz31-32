@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/children"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "History QA Child",
+      "birthDate": "2023-10-24",
+      "guardians": [
+        "Guardian 1"
+      ],
+      "groupId": null
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Child created", function () { pm.expect(pm.response.code).to.be.oneOf([200,201]); });
+      const j=pm.response.json();
+      const d=j.data || j;
+      pm.collectionVariables.set("hist_child_id", d.id);
+    language: text/javascript
+order: 1000

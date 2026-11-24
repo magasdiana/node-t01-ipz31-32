@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects/{{subjectId}}"
+method: DELETE
+order: 33000

@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/reports/profit?month={{month}}"
+method: GET
+queryParams:
+  month: "{{month}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("Teacher is forbidden", function () { pm.response.to.have.status(403); });
+    language: text/javascript
+order: 5000

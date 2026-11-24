@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/rooms"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Invalid Cost Room",
+      "cost": -1
+    }
+order: 19000

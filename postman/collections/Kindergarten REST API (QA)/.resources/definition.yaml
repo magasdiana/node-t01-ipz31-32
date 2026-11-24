@@ -1,0 +1,31 @@
+$kind: collection
+description: Role-based QA collection. Fill login/password and ownership variables before running role folders. Check endpoint authorization and ownership restrictions.
+variables:
+  baseUrl: http://localhost:3000
+  childId: "1"
+  groupId: "1"
+  roomId: "1"
+  staffId: "1"
+  subjectId: "1"
+  month: 2026-10
+  adminLogin: ""
+  adminPassword: ""
+  managerLogin: ""
+  managerPassword: ""
+  parentLogin: ""
+  parentPassword: ""
+  teacherLogin: ""
+  teacherPassword: ""
+  adminToken: ""
+  managerToken: ""
+  parentToken: ""
+  teacherToken: ""
+  parentChildId: "1"
+  parentGroupId: "1"
+  teacherStaffId: "1"
+  teacherGroupId: "1"
+  ownLessonId: "1"
+  childPreferences: No special preferences
+  historyAt: ""
+  historyId: "1"
+  hist_child_id: ""

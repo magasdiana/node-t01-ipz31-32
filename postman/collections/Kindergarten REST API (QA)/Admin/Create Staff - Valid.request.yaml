@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/staff"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "QA Test Educator",
+      "position": "educator",
+      "salary": 20000,
+      "allowance": 0,
+      "subjectIds": []
+    }
+order: 24000

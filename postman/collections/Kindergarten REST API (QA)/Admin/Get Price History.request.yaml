@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/settings/prices/history"
+method: GET
+order: 41000

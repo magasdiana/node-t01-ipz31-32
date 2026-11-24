@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/children/{{childId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Manager Updated Child"
+    }
+order: 4000

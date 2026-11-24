@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/lessons/{{ownLessonId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "day": 1,
+      "start": "09:00"
+    }
+order: 3000

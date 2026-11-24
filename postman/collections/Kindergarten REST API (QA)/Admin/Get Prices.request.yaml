@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/settings/prices"
+method: GET
+order: 36000

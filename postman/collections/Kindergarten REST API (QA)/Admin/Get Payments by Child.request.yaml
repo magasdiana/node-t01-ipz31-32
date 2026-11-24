@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/payments?childId={{childId}}"
+method: GET
+headers:
+  Content-Type: application/json
+queryParams:
+  childId: "{{childId}}"
+order: 43000

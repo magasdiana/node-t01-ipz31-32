@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects/{{subjectId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated QA Subject"
+    }
+order: 32000

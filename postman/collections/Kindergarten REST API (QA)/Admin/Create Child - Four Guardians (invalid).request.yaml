@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/children"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Four Guardians Child",
+      "birthDate": "2023-10-24",
+      "guardians": [
+        "Guardian 1",
+        "Guardian 2",
+        "Guardian 3",
+        "Guardian 4"
+      ]
+    }
+order: 6000

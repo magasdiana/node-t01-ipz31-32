@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/children/{{parentChildId}}/invoice?period=year"
+method: GET
+queryParams:
+  period: year
+order: 5000

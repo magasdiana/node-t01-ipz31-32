@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/history?entity=child&entityId={{childId}}"
+method: GET
+headers:
+  Content-Type: application/json
+queryParams:
+  entity: child
+  entityId: "{{childId}}"
+order: 54000

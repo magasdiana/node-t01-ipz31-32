@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/groups"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Invalid Age Group",
+      "age": 6,
+      "limit": 20
+    }
+order: 13000

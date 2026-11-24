@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects/{{subjectId}}"
+method: GET
+order: 29000

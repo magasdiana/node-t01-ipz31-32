@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/groups/{{groupId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Manager Updated Group"
+    }
+order: 9000
