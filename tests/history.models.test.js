@@ -1,3 +1,4 @@
+
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Prisma } from "@prisma/client";
@@ -55,6 +56,32 @@ describe("QA History Models & Schema Validation (FR-34 - FR-36, T2-T4)", () => {
             auditedModels.length >= 10,
             `Expected at least 10 audited models, found ${auditedModels.length}`
         );
+    });
+
+    it("FR-34: buildHistoryEntry creates and masks history entry", () => {
+        const entry = buildHistoryEntry({
+            model: "Child",
+            operation: "create",
+            before: null,
+            after: {
+                id: 10,
+                name: "Test Child",
+                passwordHash: "secret",
+            },
+            context: {
+                requestId: "test-request",
+                actor: { id: 1, role: "Admin" },
+            },
+        });
+
+        assert.strictEqual(entry.entity, "child");
+        assert.strictEqual(entry.entityId, 10);
+        assert.strictEqual(entry.action, "create");
+        assert.strictEqual(entry.changes.before, null);
+        assert.strictEqual(entry.changes.after.passwordHash, "***");
+        assert.strictEqual(entry.requestId, "test-request");
+        assert.deepStrictEqual(entry.actor, { id: 1, role: "Admin" });
+        assert.strictEqual(entry.source, "api");
     });
 
     it("T4 & Zod: valid history entry data passes Zod schema validation", () => {

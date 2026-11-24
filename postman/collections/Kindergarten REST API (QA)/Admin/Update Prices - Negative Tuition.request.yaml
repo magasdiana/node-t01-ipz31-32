@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/settings/prices"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tuitionMonthly": -1
+    }
+order: 38000

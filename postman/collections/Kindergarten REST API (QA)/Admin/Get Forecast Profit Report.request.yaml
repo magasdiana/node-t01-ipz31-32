@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/reports/forecast-profit"
+method: GET
+order: 52000

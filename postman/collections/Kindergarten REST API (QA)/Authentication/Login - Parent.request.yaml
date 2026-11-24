@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+   {"password":"Parent#2026","login":"parent"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Login successful", function () { pm.response.to.have.status(200); });
+      const data = pm.response.json();
+      const token = data.token || (data.data && data.data.token);
+      pm.test("Response contains token", function () { pm.expect(token).to.be.a("string").and.not.empty; });
+      pm.collectionVariables.set("parentToken", token);
+    language: text/javascript
+order: 3000

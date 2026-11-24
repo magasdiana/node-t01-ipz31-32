@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/reports/profit?month={{month}}"
+method: GET
+headers:
+  Content-Type: application/json
+queryParams:
+  month: "{{month}}"
+order: 49000

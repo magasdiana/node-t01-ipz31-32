@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/groups/{{groupId}}/history"
+method: GET
+order: 59000

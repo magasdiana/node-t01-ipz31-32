@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/groups/{{teacherGroupId}}/lessons"
+method: GET
+order: 2000

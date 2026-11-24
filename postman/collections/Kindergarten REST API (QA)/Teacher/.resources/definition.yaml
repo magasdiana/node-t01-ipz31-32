@@ -1,0 +1,8 @@
+$kind: collection
+auth:
+  - id: 4c16fd32-8aeb-4fed-b55b-26862544fc60
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{teacherToken}}"
+order: 6000

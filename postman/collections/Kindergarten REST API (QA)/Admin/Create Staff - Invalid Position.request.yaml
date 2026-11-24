@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/staff"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Invalid Position Staff",
+      "position": "unknown"
+    }
+order: 25000

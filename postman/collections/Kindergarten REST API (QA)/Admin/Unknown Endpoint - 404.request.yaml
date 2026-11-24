@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/route-that-does-not-exist"
+method: GET
+order: 60000

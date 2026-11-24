@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/history/entity/child/{{childId}}"
+method: GET
+order: 57000

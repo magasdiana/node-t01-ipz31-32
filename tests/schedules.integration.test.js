@@ -1,3 +1,4 @@
+
 // Фінальна інтеграційна перевірка модуля розкладу (тиждень 7, Назар).
 // Працює без БД: сервіс збирається з підмінними залежностями (stateful-репозиторій),
 // а генератор і правила накладок використовуються справжні.
@@ -129,7 +130,7 @@ const flatRows = (rows, groups) =>
 // ---------- Генератор: бізнес-правила ----------
 
 describe("Генератор розкладу: бізнес-правила FR-17–FR-20", () => {
-  it("сталі перерв: 3 прийоми їжі по 30 хв не підряд і 1 година сну в межах 8 годин", () => {
+  it("сталі перерви: 3 прийоми їжі по 30 хв не підряд і 1 година сну в межах 8 годин", () => {
     const meals = SCHEDULE.FIXED_BREAKS.filter((b) => b.name.startsWith("meal"));
     const nap = SCHEDULE.FIXED_BREAKS.find((b) => b.name === "nap");
 
@@ -248,7 +249,7 @@ describe("Генератор розкладу: нестача ресурсів �
       groups: makeGroups(1),
       subjects: SUBJECTS,
       teachers: TEACHERS,
-      config: { DAYS: ["mon"], FIXED_BREAKS: [] }, // 1 день, ліміт 2 заняття
+      config: { DAYS: ["mon"], FIXED_BREAKS: [] },
     });
     assert.equal(lessons.length, 2);
     assert.equal(unscheduled.length, 3);
@@ -263,7 +264,7 @@ describe("Генератор розкладу: нестача ресурсів �
       groups: makeGroups(3),
       subjects: [{ id: 1 }],
       teachers: [{ id: 1, subjectIds: [1] }],
-      config: { DAYS: ["mon"], STAY_HOURS: 0.5, FIXED_BREAKS: [] }, // один слот на тиждень
+      config: { DAYS: ["mon"], STAY_HOURS: 0.5, FIXED_BREAKS: [] },
     });
     assert.equal(unscheduled.length, 2);
     assert.ok(unscheduled.every((u) => u.blockedBy.includes("teacher")));
@@ -282,7 +283,7 @@ describe("Генератор розкладу: нестача ресурсів �
       groups,
       subjects: [{ id: 1 }],
       teachers,
-      config: { DAYS: ["mon"], STAY_HOURS: 0.5, FIXED_BREAKS: [] }, // лише один слот
+      config: { DAYS: ["mon"], STAY_HOURS: 0.5, FIXED_BREAKS: [] },
     });
     assert.equal(lessons.length, 1);
     assert.equal(unscheduled.length, 1);
@@ -305,7 +306,6 @@ describe("Генератор розкладу: нестача ресурсів �
 
   it("busyLessons: генератор планує навколо вже існуючих занять викладача", () => {
     const busy = [
-      // єдиний викладач гуртка 1 зайнятий у понеділок о 09:00 (день числом, як у БД)
       { groupId: 99, staffId: 1, roomId: 500, day: 1, start: "09:00", duration: 30 },
     ];
     const { lessons } = generateSchedule({
@@ -334,7 +334,7 @@ describe("POST /schedules (сервіс): збереження, перегене
 
     const second = await service.generateSchedules({ save: true });
     assert.equal(second.saved, true);
-    assert.equal(state.rows.length, 20, "повторна генерація не має дублювати заняття");
+    assert.equal(state.rows.length, 20);
 
     const keys = state.rows.map((r) => `${r.groupId}:${r.subjectId}`);
     assert.equal(new Set(keys).size, keys.length);
@@ -359,14 +359,18 @@ describe("POST /schedules (сервіс): збереження, перегене
     const service = createService({ groups, repo });
 
     await service.generateSchedules({ save: true });
-    const keptBefore = JSON.stringify(state.rows.filter((r) => r.groupId !== 2).map(({ id, ...r }) => r));
+    const keptBefore = JSON.stringify(
+      state.rows.filter((r) => r.groupId !== 2).map(({ id: _id, ...r }) => r),
+    );
 
     const result = await service.generateSchedules({ groupIds: [2], save: true });
     assert.equal(result.saved, true);
     assert.equal(result.lessons.length, 5);
 
     // групи 1, 3, 4 не змінилися
-    const keptAfter = JSON.stringify(state.rows.filter((r) => r.groupId !== 2).map(({ id, ...r }) => r));
+    const keptAfter = JSON.stringify(
+      state.rows.filter((r) => r.groupId !== 2).map(({ id: _id, ...r }) => r),
+    );
     assert.equal(keptAfter, keptBefore);
 
     assert.equal(state.rows.length, 20);
@@ -394,7 +398,6 @@ describe("POST /schedules (сервіс): збереження, перегене
     await assert.rejects(service.generateSchedules({ save: true }), (e) => e.status === 409);
     assert.equal(state.replaceCalls, 0);
 
-    // чернетка при цьому доступна й пояснює причину
     const draft = await service.generateSchedules({});
     assert.equal(draft.saved, false);
     assert.equal(draft.unscheduled.length, 2);
@@ -479,6 +482,7 @@ describe("GET /schedules/forecast (сервіс)", () => {
       assert.ok(g.groupId < 0);
       assert.equal(g.roomId, null);
     }
+
     // кожна з 6 груп має всі 5 гуртків
     for (const g of r.scenario.groups) {
       const own = r.lessons.filter((l) => l.groupId === g.groupId);
@@ -514,9 +518,9 @@ describe("GET /schedules/forecast (сервіс)", () => {
     const bad = [
       { groups: 0 },
       { groups: 51 },
-      { groups: 3, children: "10,10" }, // довжина списку ≠ groups
-      { groups: 2, children: "21,5" }, // > 20 дітей у групі
-      { groups: 2, children: "41" }, // 41 дитина на 2 групи → 21 в одній
+      { groups: 3, children: "10,10" },
+      { groups: 2, children: "21,5" },
+      { groups: 2, children: "41" },
       { groups: 2, children: "-5" },
     ];
     for (const query of bad) {

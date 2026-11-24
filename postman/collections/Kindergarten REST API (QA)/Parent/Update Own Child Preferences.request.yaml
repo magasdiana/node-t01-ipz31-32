@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/children/{{parentChildId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "preferences": "{{childPreferences}}"
+    }
+order: 3000

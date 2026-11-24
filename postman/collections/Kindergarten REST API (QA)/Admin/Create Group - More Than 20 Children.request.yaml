@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/groups"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Oversized QA Group",
+      "age": 3,
+      "limit": 21
+    }
+order: 12000

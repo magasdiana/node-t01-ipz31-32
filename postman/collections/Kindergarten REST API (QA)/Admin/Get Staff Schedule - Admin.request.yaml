@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/staff/{{staffId}}/schedule"
+method: GET
+order: 47000

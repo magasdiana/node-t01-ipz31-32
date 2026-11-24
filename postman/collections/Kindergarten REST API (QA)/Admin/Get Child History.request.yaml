@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/children/{{childId}}/history"
+method: GET
+order: 58000

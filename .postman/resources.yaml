@@ -1,0 +1,13 @@
+# Use this workspace to collaborate
+workspace:
+  id: c4765962-d4b2-468c-8893-a6033c6150d9
+
+localResources:
+  collections:
+    - ../docs/postman_collection.json
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Kindergarten REST API (QA): 94d7d402-275d-45c3-8cd2-17057d0ba59e

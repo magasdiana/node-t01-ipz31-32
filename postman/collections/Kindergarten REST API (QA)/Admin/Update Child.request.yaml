@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/children/{{childId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated QA Child"
+    }
+order: 7000

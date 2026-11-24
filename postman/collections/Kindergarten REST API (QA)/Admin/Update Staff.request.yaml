@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/staff/{{staffId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated QA Staff"
+    }
+order: 26000

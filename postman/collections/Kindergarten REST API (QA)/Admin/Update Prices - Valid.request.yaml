@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/settings/prices"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tuitionMonthly": 15000,
+      "mealsPerDayByAge": {
+        "2": 300,
+        "3": 400,
+        "4": 500,
+        "5": 600
+      },
+      "benefitPercent": 20,
+      "annualPaymentPercent": 12
+    }
+order: 37000
